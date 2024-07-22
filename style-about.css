@@ -161,4 +161,27 @@ body{
     }
   }
 
-  
+@media only screen and (max-width: 1000px) {
+    .main-border {
+        padding: 5vw;
+    }
+    
+    .about-me {
+    font-size: 6vw;
+    }
+    .about-me-text {
+        font-size: 2.5vw;
+    }
+    
+    .develop, .design {
+        height: 17vw;
+    }
+
+        .button-email {
+        font-size: 8.5vw;
+    }
+    
+    .button-linked {
+        font-size: 8.5vw;
+    }
+}
