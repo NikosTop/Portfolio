@@ -1,0 +1,633 @@
+body{
+    background-color: hsl(0deg 0% 94.12%);
+}
+
+.imgnikos{
+    background: url(Profile\ Picture.png) no-repeat;
+    position: absolute;
+    top: 0;
+    right: 0;
+    max-width: 100%;
+    background-size: 100% auto;
+    height: 100vh;
+}
+
+.hero-container{
+    max-width: 95%;
+    margin: 0 auto;
+}
+
+.hero{
+    margin-top: 11%;
+}
+
+.name {
+    font-size: 5.5vw;
+    font-weight: normal;
+    font-family: 'Josefin Sans', sans-serif;
+    letter-spacing: 8px;
+    margin-bottom: -11px;
+    position: relative;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-30px);
+    }
+    60% {
+        transform: translateY(-15px);
+    }
+}
+
+.bounce {
+    display: inline-block;
+    animation: bounce 0.5s forwards;
+    animation-delay: var(--delay);
+}
+
+.undername{
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 1.8vw;
+    line-height: 121%;
+    font-weight: 500;
+    margin-bottom: 35px;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+.undername.fade-in, .webdev.fade-in {
+    opacity: 1;
+}
+
+.hero-text-left a {
+    border-radius: 35px;
+    padding: 13px 29px;
+    font-family: 'Josefin Sans', sans-serif;
+    background-color: rgb(255, 94, 0);
+    color: black;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 1.7vw;
+    opacity: 0;
+    transform: scale(1);
+    transition: opacity 0.5s ease 1.5s, transform 1s ease 1.5s;
+}
+
+.hero-text-left a.fade-in {
+    opacity: 1;
+    transform: scale(1.15);
+}
+
+.hero-text-left a.fade-in.scale-back {
+    transform: scale(1);
+}
+
+.hero-text-left a:hover, .hero-text-left a:active{
+    background-color: rgb(0, 0, 0);
+        color: white;
+}
+
+.header-main {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.header-main-logo {
+    width: 33%;
+    height: 50%;
+    z-index: 1;
+    text-align: center;
+}
+
+.header-main-nav {
+    width: 33%;
+    font-family: 'Josefin Sans', sans-serif;
+    z-index: 1;
+    box-sizing: border-box;
+    padding: 0;
+}
+
+.mainMenu{
+    list-style-type: none;
+    display: flex;
+}
+
+.mainMenu li{
+    padding-left: 19px;
+    padding-right: 19px;
+    text-decoration: none;
+}
+
+.mainMenu li a{
+    border-radius: 21px;
+    display: inline-block;
+    padding: 15px;
+    color: black;
+    text-decoration: none;
+}
+
+.mainMenu li a:hover{
+    background: black;
+    color: white;
+}
+
+.openMenu{
+    font-size: 2rem;
+    margin:20px;
+    display: none;
+    cursor: pointer;
+}
+
+.closeMenu{
+    font-size: 2rem;
+    display: none;
+    cursor: pointer;
+}
+
+.header-main-contact {
+    margin-top: 19px;
+    width: 33%;
+    height:100%;
+    z-index: 1;
+    text-align:center
+}
+
+.header-main-contact a{
+    border-radius: 25px;
+    padding: 13px;
+    font-family: 'Josefin Sans', sans-serif;
+    background-color: rgb(255, 255, 255);
+    color: black;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+    
+.header-main-contact a:hover, .header-main-contact a:active{
+    background-color: rgb(0, 0, 0);
+    color: rgb(255, 255, 255);
+}
+
+.skillspans{
+    word-spacing: 9px;
+    margin-top: 5%;
+    font-size: 1.2vw;
+}
+
+.skillspans1 p {
+    margin-bottom: -7px;
+}
+
+.skillspans p {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 1s ease 0.3s, transform 1s ease 0.3s;
+}
+
+.skillspans p.fade-in {
+    opacity: 1;
+    transform: translateY(25%);
+}
+
+.htmlspan{
+    border-radius: 8px;
+    padding: 11px;
+    font-family: 'Josefin Sans', sans-serif;
+    background-color: hsl(17.93deg 100% 63.92%);
+    color: rgb(0, 0, 0);
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.javascriptspan{
+    border-radius: 8px;
+    padding: 11px;
+    font-family: 'Josefin Sans', sans-serif;
+    background-color: hsl(17.91deg 100% 58.63%);
+    color: rgb(255, 255, 255);
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.ecommercespan{
+    border-radius: 8px;
+    padding: 11px;
+    font-family: 'Josefin Sans', sans-serif;
+    background-color: hsl(0, 0%, 55%);
+    color: rgb(255, 255, 255);
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.cssspan{
+    border-radius: 8px;
+    padding: 11px;
+    font-family: 'Josefin Sans', sans-serif;
+    background-color: hsl(0deg 0% 19.61%);
+    color: rgb(255, 255, 255);
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.wordpressspan{
+    border-radius: 8px;
+    padding: 11px;
+    font-family: 'Josefin Sans', sans-serif;
+    background-color: hsl(0deg 0% 42.75%);
+    color: rgb(255, 255, 255);
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.graphicspan{
+    border-radius: 8px;
+    padding: 11px;
+    font-family: 'Josefin Sans', sans-serif;
+    background-color: hsl(24, 100%, 57%);
+    color: rgb(255, 255, 255);
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.webdev {
+    font-size: 1.7vw;
+    background-color: rgb(22, 22, 22);
+    color: rgb(255, 255, 255);
+    border-radius: 27px;
+    padding: 8px;
+    text-align: center;
+    font-family: 'Josefin Sans', sans-serif;
+    line-height: 1.2;
+    position: absolute;
+    display: inline-block;
+    right: 44%;
+    transform: translate(50%, 0);
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+.projects{
+    margin-top: 9vw;
+    font-family: 'Josefin Sans', sans-serif;
+}
+
+.projects-h1 {
+    font-size: 2.3vw;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.projects-h1.fade-in {
+    opacity: 1;
+}
+
+.project-images {
+    display: flex;
+    justify-content: space-between;
+}
+
+.project1{
+    margin-top: 4%;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+}
+
+.project1.fade-in {
+    opacity: 1;
+}
+
+.happyfarm01, .nikostop01, .perfumist01 {
+    font-size: 2.3vw;
+    background-color: rgb(22, 22, 22);
+    color: rgb(255, 255, 255);
+    border-radius: 5px;
+    padding: 5px;
+    text-align: center;
+    font-family: 'IBM Plex Sans', sans-serif;
+    transform: translate(-79%, 0%);
+    display: inline-block;
+}
+
+.project2 {
+    margin-top: 7vw;
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+
+.project2.fade-in {
+    opacity: 1;
+}
+
+.nikostop-img, .perfumist-img, .happyfarm-img{
+    height: 22vw;
+    border-radius: 17px;
+}
+
+.project3 {
+    margin-top: 11.1vw;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+}
+
+.project3.fade-in {
+    opacity: 1;
+}
+
+.button-happyfarm, .button-nikostop, .button-perfumist {
+    font-family: 'Josefin Sans', sans-serif;
+    /* background-color: rgb(255, 94, 0); */
+    color: black;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 1.3vw;
+    transform: translate(3%, -19%);
+}
+
+.button-happyfarm:hover, .button-nikostop:hover, .button-perfumist:hover {
+    /* background-color: rgb(0, 0, 0); */
+        color: rgb(255, 102, 0);
+}
+
+.placeholder-paragraph {
+    visibility: hidden;
+}
+
+#topBtn {
+    display: none;
+    position: fixed;
+    bottom: 11px;
+    right: 21px;
+    z-index: 99;
+    border: none;
+    outline: none;
+    background-color: black;
+    color: white;
+    cursor: pointer;
+    padding: 13px;
+    border-radius: 25px;
+    font-size: 27px;
+}
+
+#topBtn:hover {
+    background-color: rgb(255, 94, 0); /* Add a dark-grey background on hover */
+}
+
+@media only screen and (max-width: 1024px) {
+
+    .mainMenu{
+        height: 35vh;
+        position: fixed;
+        left: 0px;
+        top: 0;
+        z-index: 10;
+        flex-direction: column;
+        justify-content: space-evenly;
+        align-items: center;
+        background: #ffffff;
+        transition: top 1s ease;
+        font-size: 1.3rem;
+        margin: auto;
+        padding: 13px;
+        display: none;
+    }
+    
+    .closeMenu{
+        display: block;
+        position: absolute;
+        top: 20px;
+        right: 25px;
+    }
+    
+    .openMenu{
+        display: block;
+        padding-left: 13px
+    }
+
+    .mainMenu li a:hover{
+        background: black;
+        color: rgb(255, 255, 255);
+    }
+
+    .header-main-nav ul li a{
+        background: none;
+    }
+    
+}
+
+@media only screen and (max-width: 768px) {
+
+    .hero-text-right{
+        height: 0.3vw;
+    }
+    
+    .webdev {
+        top: 23vw;
+    }
+    
+}
+
+@media only screen and (max-width: 600px) {
+    .imgnikos {
+        background: url(Profile\ Picture\ Mobile.png);
+        background-repeat: no-repeat;
+        position: absolute;
+        background-size: contain;
+        top: 0;
+        max-width: 100%;
+    }
+
+    .name {
+        font-size: 11vw;
+        font-weight: normal;
+        font-family: 'Josefin Sans', sans-serif;
+        letter-spacing: 1px;
+        margin-bottom: -3px;
+    }
+
+    .webdev {
+        font-size: 2.3vw;
+        top: 61vw;
+        right: 71%;
+    }
+
+    .hero-text-left a {
+        border-radius: 35px;
+        padding: 2.5vw 5vw;
+        font-family: 'Josefin Sans', sans-serif;
+        background-color: rgb(255, 94, 0);
+        color: black;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 3.5vw;
+        margin-top: 45px;
+    }
+
+    .hero-text-right{
+        height:81vw;
+    }
+
+    .undername {
+        font-family: 'Josefin Sans', sans-serif;
+        font-size: 4vw;
+        line-height: 109%;
+        font-weight: 500;
+        margin-bottom: -23px;
+    }
+
+    .mainMenu{
+        padding: 0px;
+    }
+
+    .header-main-nav {
+        width: 33%;
+        font-family: 'Josefin Sans', sans-serif;
+        z-index: 1;
+        box-sizing: border-box;
+        padding: 0px;
+        padding-top: 7px;
+        text-align: center;
+    }
+
+    .htmlspan, .graphicspan, .wordpressspan, .cssspan, .ecommercespan, .javascriptspan {
+        font-size: 3.7vw;
+    }
+
+    .projects-h1 {
+        font-size: 6.5vw;
+        padding-top: 15px;
+    }
+    .project-images {
+        text-align: center;
+        display: block;
+    }
+    .project1 {
+        margin-top: 11%;
+    }
+    .project2 {
+        margin-top: 11.1vw;
+    }
+    .nikostop-img, .perfumist-img, .happyfarm-img {
+        height: 65vw;
+        margin-left: 10%;
+    }
+    .happyfarm01, .nikostop01, .perfumist01 {
+        font-size: 7.3vw;
+    }
+    .button-happyfarm, .button-nikostop, .button-perfumist {
+        font-size: 4.3vw;
+        transform: translate(-1%, 5%);
+    }
+    section#about {
+        margin-top: -13vw;
+    }
+    #topBtn {
+        padding: 2vw;
+    }
+
+}
+
+@media only screen and (max-width: 480px) {
+
+    .imgnikos {
+        background: url(Profile\ Picture\ Mobile.png);
+        background-repeat: no-repeat;
+        position: absolute;
+        background-size: contain;
+        top: 0;
+        max-width: 100%;
+    }
+
+    .name {
+        font-size: 13vw;
+        font-weight: normal;
+        font-family: 'Josefin Sans', sans-serif;
+        letter-spacing: 1px;
+        margin-bottom: -3px;
+    }
+
+    .webdev {
+        font-size: 2.3vw;
+        top: 61vw;
+        right: 71%;
+    }
+
+
+    .hero-text-right{
+        height:79vw;
+    }
+
+    .undername {
+        font-family: 'Josefin Sans', sans-serif;
+        line-height: 109%;
+        font-weight: 500;
+        margin-bottom: -23px;
+    }
+
+    .mainMenu{
+        padding: 0px;
+    }
+
+    .header-main-nav {
+        width: 33%;
+        font-family: 'Josefin Sans', sans-serif;
+        z-index: 1;
+        box-sizing: border-box;
+        padding: 0px;
+        padding-top: 7px;
+        text-align: center;
+    }
+
+    .closeMenu{
+        left:-85px;
+    }
+
+    .mainMenu li a {
+        padding-top: 35px;
+        padding: 7px;
+    }
+
+    .skillspans1 {
+        margin-bottom: -19px;
+    }
+    .skillspans {
+        word-spacing: 3px;
+    }
+    .projects-h1 {
+        font-size: 6.5vw;
+        padding-top: 15px;
+    }
+    .project-images {
+        text-align: center;
+        display: block;
+    }
+    .project1 {
+        margin-top: 11%;
+    }
+    .project2 {
+        margin-top: 11.1vw;
+    }
+    .nikostop-img, .perfumist-img, .happyfarm-img {
+        height: 65vw;
+        margin-left: 10%;
+    }
+    .happyfarm01, .nikostop01, .perfumist01 {
+        font-size: 7.3vw;
+    }
+    .button-happyfarm, .button-nikostop, .button-perfumist {
+        font-size: 4.3vw;
+        transform: translate(-1%, 5%);
+    }
+    section#about {
+        margin-top: -19vw;
+    }
+}
