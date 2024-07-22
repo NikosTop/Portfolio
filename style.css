@@ -424,7 +424,7 @@ body{
     
 }
 
-@media only screen and (max-width: 768px) {
+@media only screen and (max-device-width: 768px) {
 
     .hero-text-right{
         height: 0.3vw;
@@ -436,7 +436,7 @@ body{
     
 }
 
-@media only screen and (max-width: 600px) {
+@media only screen and (max-device-width: 600px) {
     .imgnikos {
         background: url(Profile\ Picture\ Mobile.png);
         background-repeat: no-repeat;
@@ -536,7 +536,7 @@ body{
 
 }
 
-@media only screen and (max-width: 480px) {
+@media only screen and (max-device-width: 480px) {
 
     .imgnikos {
         background: url(Profile\ Picture\ Mobile.png);
