@@ -97,7 +97,7 @@ body{
 }
 
 .header-main-logo {
-    width: 33%;
+    width: 27%;
     height: 50%;
     z-index: 1;
     text-align: center;
@@ -109,6 +109,7 @@ body{
     z-index: 1;
     box-sizing: border-box;
     padding: 0;
+    font-size: 21px;
 }
 
 .mainMenu{
@@ -165,6 +166,7 @@ body{
     text-align: center;
     text-decoration: none;
     display: inline-block;
+    font-size: 21px;
 }
     
 .header-main-contact a:hover, .header-main-contact a:active{
@@ -397,7 +399,7 @@ body{
         transition: top 1s ease;
         font-size: 1.3rem;
         margin: auto;
-        padding: 13px;
+        padding: 23px;
         display: none;
     }
     
@@ -424,7 +426,7 @@ body{
     
 }
 
-@media only screen and (max-width: 768px) {
+@media only screen and (max-device-width: 768px) {
 
     .hero-text-right{
         height: 0.3vw;
@@ -577,10 +579,6 @@ body{
         padding: 0px;
         padding-top: 7px;
         text-align: center;
-    }
-
-    .closeMenu{
-        left:-85px;
     }
 
     .mainMenu li a {
