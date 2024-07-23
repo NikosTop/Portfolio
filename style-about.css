@@ -24,6 +24,7 @@ body{
     text-align: center;
     text-decoration: none;
     display: inline-block;
+    font-size: 19px;
 }
     
 .header-main-contact a:hover, .header-main-contact a:active{
@@ -54,6 +55,7 @@ body{
     text-align: center;
     text-decoration: none;
     display: inline-block;
+    font-size: 19px;
 }
 
 .openMenu a:hover{
