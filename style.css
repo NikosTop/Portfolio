@@ -399,7 +399,7 @@ body{
         transition: top 1s ease;
         font-size: 1.3rem;
         margin: auto;
-        padding: 23px;
+        padding: 45px;
         display: none;
     }
     
@@ -412,7 +412,7 @@ body{
     
     .openMenu{
         display: block;
-        padding-left: 13px
+        padding-left: 13px;
     }
 
     .mainMenu li a:hover{
@@ -422,6 +422,15 @@ body{
 
     .header-main-nav ul li a{
         background: none;
+        font-size: 3vw;
+    }
+
+    .fa-bars:before {
+    font-size: 5vw;
+    }
+
+    .fa-bars:before {
+    font-size: 5vw;
     }
     
 }
@@ -579,11 +588,6 @@ body{
         padding: 0px;
         padding-top: 7px;
         text-align: center;
-    }
-
-    .mainMenu li a {
-        padding-top: 35px;
-        padding: 7px;
     }
 
     .skillspans1 {
