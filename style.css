@@ -345,15 +345,25 @@ body{
     opacity: 1;
 }
 
-.button-happyfarm, .button-nikostop, .button-perfumist {
+.button-happyfarm, .button-nikostop {
     font-family: 'Josefin Sans', sans-serif;
     /* background-color: rgb(255, 94, 0); */
     color: black;
     text-decoration: none;
     display: inline-block;
     font-size: 1.3vw;
-    transform: translate(3%, -19%);
+    transform: translate(34%, -19%);
 }
+
+ .button-perfumist {
+    font-family: 'Josefin Sans', sans-serif;
+    /* background-color: rgb(255, 94, 0); */
+    color: black;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 1.3vw;
+    transform: translate(61%, -19%);
+ }
 
 .button-happyfarm:hover, .button-nikostop:hover, .button-perfumist:hover {
     /* background-color: rgb(0, 0, 0); */
