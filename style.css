@@ -484,10 +484,6 @@ body{
         margin-bottom: -23px;
     }
 
-    .mainMenu{
-        padding: 0px;
-    }
-
     .header-main-nav {
         width: 33%;
         font-family: 'Josefin Sans', sans-serif;
@@ -571,10 +567,6 @@ body{
         line-height: 109%;
         font-weight: 500;
         margin-bottom: -23px;
-    }
-
-    .mainMenu{
-        padding: 0px;
     }
 
     .header-main-nav {
