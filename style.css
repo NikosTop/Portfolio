@@ -446,22 +446,32 @@ body{
 }
 
 @media only screen and (max-device-width: 932px) {
+
+    .imgnikos{
+    background: url(Profile\ Picture.png) no-repeat;
+    position: absolute;
+    top: 0;
+    right: 0;
+    max-width: 100%;
+    background-size: 100% auto;
+    height: 100vh;
+    }
     
-        .mainMenu{
-        height: 35vh;
-        position: fixed;
-        left: 0px;
-        top: 0;
-        z-index: 10;
-        flex-direction: column;
-        justify-content: space-evenly;
-        align-items: center;
-        background: #ffffff;
-        transition: top 1s ease;
-        font-size: 1.3rem;
-        margin: auto;
-        padding: 45px;
-        display: none;
+    .mainMenu{
+    height: 35vh;
+    position: fixed;
+     left: 0px;
+     top: 0;
+     z-index: 10;
+     flex-direction: column;
+     justify-content: space-evenly;
+      align-items: center;
+     background: #ffffff;
+     transition: top 1s ease;
+     font-size: 1.3rem;
+     margin: auto;
+     padding: 45px;
+     display: none;
     }
     
     .closeMenu{
