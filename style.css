@@ -445,6 +445,57 @@ body{
     
 }
 
+@media only screen and (max-device-width: 932px) {
+    
+        .mainMenu{
+        height: 35vh;
+        position: fixed;
+        left: 0px;
+        top: 0;
+        z-index: 10;
+        flex-direction: column;
+        justify-content: space-evenly;
+        align-items: center;
+        background: #ffffff;
+        transition: top 1s ease;
+        font-size: 1.3rem;
+        margin: auto;
+        padding: 45px;
+        display: none;
+    }
+    
+    .closeMenu{
+        display: block;
+        position: absolute;
+        top: 20px;
+        right: 25px;
+    }
+    
+    .openMenu{
+        display: block;
+        padding-left: 13px;
+    }
+
+    .mainMenu li a:hover{
+        background: black;
+        color: rgb(255, 255, 255);
+    }
+
+    .header-main-nav ul li a{
+        background: none;
+        font-size: 3vw;
+    }
+
+    .fa-bars:before {
+    font-size: 5vw;
+    }
+
+    .fa-bars:before {
+    font-size: 5vw;
+    }
+    
+}
+
 @media only screen and (max-device-width: 768px) {
 
     .hero-text-right{
@@ -458,6 +509,7 @@ body{
 }
 
 @media only screen and (max-device-width: 600px) {
+    
     .imgnikos {
         background: url(Profile\ Picture\ Mobile.png);
         background-repeat: no-repeat;
