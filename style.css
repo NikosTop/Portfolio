@@ -520,13 +520,14 @@ body{
 
 @media only screen and (max-device-width: 600px) {
     
-    .imgnikos {
-        background: url(Profile\ Picture\ Mobile.png);
-        background-repeat: no-repeat;
+    .imgnikos{
+        background: url(Profile\ Picture.png) no-repeat;
         position: absolute;
-        background-size: contain;
         top: 0;
+        right: 0;
         max-width: 100%;
+        background-size: 100% auto;
+        height: 100vh;
     }
 
     .name {
