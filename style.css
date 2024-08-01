@@ -444,7 +444,7 @@ font-size: 33px;
     
 }
 
-@media (orientation: landscape) and (max-width: 768px) {
+/* @media (orientation: landscape) and (max-width: 768px) {
 
     .name {
     font-size: 5.5vw;
@@ -474,7 +474,7 @@ font-size: 33px;
     .skillspans {
     font-size: 1.7vw;
     }
-}
+} */
 
 @media only screen and (max-width: 600px) {
     
