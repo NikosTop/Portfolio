@@ -444,14 +444,14 @@ font-size: 33px;
     
 }
 
-@media only screen and (max-device-width : 1020px) and (orientation : landscape){
+@media only screen and (max-device-width : 850px) and (orientation : landscape){
 
     .name {
         margin-bottom: 0px;
     }
     
     .undername {
-        font-size: 1.9vw;
+        font-size: 1.7vw;
     }
     
     .header-main-contact a {
