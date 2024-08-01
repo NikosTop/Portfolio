@@ -444,14 +444,11 @@ font-size: 33px;
     
 }
 
-@media only screen and (max-device-width : 768px) and (orientation : portrait){
-.MobileMorph, .DesktopMorph {
+@media only screen and (max-device-width : 1020px) and (orientation : landscape){
     
   .undername {
-    font-family: 'Josefin Sans', sans-serif;
-    font-size: 2vw;
+    font-size: 10vw;
   }
-}
 }
 
 /* @media (orientation: landscape) and (max-width: 768px) {
