@@ -446,12 +446,20 @@ font-size: 33px;
 
 @media only screen and (max-device-width : 1020px) and (orientation : landscape){
     
-  .undername {
-    font-size: 10vw;
-  }
+    .undername {
+        font-size: 2vw;
+    }
+    
+    .header-main-contact a {
+        margin-right: -37px;
+    }
+    
+    .fa-bars:before {
+        padding-left: 23px;
+    }
 }
 
-/* @media (orientation: landscape) and (max-width: 768px) {
+@media (orientation: landscape) and (max-width: 768px) {
 
     .name {
     font-size: 5.5vw;
@@ -472,6 +480,7 @@ font-size: 33px;
 
     .fa-bars:before {
     font-size: 33px;
+    padding-left: 23px;
     }
 
     .header-main-contact a {
@@ -481,7 +490,7 @@ font-size: 33px;
     .skillspans {
     font-size: 1.7vw;
     }
-} */
+}
 
 @media only screen and (max-width: 600px) {
     
