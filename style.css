@@ -148,6 +148,10 @@ body{
     cursor: pointer;
 }
 
+.fa-bars:before {
+font-size: 33px;
+}
+
 .header-main-contact {
     margin-top: 19px;
     width: 33%;
@@ -435,13 +439,24 @@ body{
     }
 
     .fa-bars:before {
-    font-size: 5vw;
+    font-size: 33px;
+    }
+    
+}
+
+@media (orientation: landscape) and (max-width: 768px) {
+
+    .undername {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 4vw;
+    line-height: 109%;
+    font-weight: 500;
+    margin-bottom: -23px;
     }
 
     .fa-bars:before {
-    font-size: 5vw;
+    font-size: 33px;
     }
-    
 }
 
 @media only screen and (max-width: 600px) {
@@ -487,7 +502,7 @@ body{
 
     .undername {
         font-family: 'Josefin Sans', sans-serif;
-        font-size: 3vw;
+        font-size: 4vw;
         line-height: 109%;
         font-weight: 500;
         margin-bottom: -23px;
