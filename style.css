@@ -447,7 +447,7 @@ font-size: 33px;
 @media only screen and (max-device-width : 1020px) and (orientation : landscape){
     
     .undername {
-        font-size: 2vw;
+        font-size: 1vw;
     }
     
     .header-main-contact a {
