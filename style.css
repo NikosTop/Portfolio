@@ -444,6 +444,16 @@ font-size: 33px;
     
 }
 
+@media only screen and (max-device-width : 1223px) and (orientation : portrait){
+.MobileMorph, .DesktopMorph {
+    
+  .undername {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 2vw;
+  }
+}
+}
+
 /* @media (orientation: landscape) and (max-width: 768px) {
 
     .name {
@@ -460,7 +470,7 @@ font-size: 33px;
     font-size: 2vw;
     line-height: 109%;
     font-weight: 500;
-    margin-bottom: -23px;
+    margin-bottom: 30px;
     }
 
     .fa-bars:before {
