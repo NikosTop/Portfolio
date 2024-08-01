@@ -446,9 +446,18 @@ font-size: 33px;
 
 @media (orientation: landscape) and (max-width: 768px) {
 
+    .name {
+    font-size: 5.5vw;
+    font-weight: normal;
+    font-family: 'Josefin Sans', sans-serif;
+    letter-spacing: 8px;
+    margin-bottom: 0px;
+    position: relative;
+    }
+
     .undername {
     font-family: 'Josefin Sans', sans-serif;
-    font-size: 4vw;
+    font-size: 2vw;
     line-height: 109%;
     font-weight: 500;
     margin-bottom: -23px;
@@ -456,6 +465,14 @@ font-size: 33px;
 
     .fa-bars:before {
     font-size: 33px;
+    }
+
+    .header-main-contact a {
+    margin-right: -37px;
+    }
+
+    .skillspans {
+    font-size: 1.7vw;
     }
 }
 
