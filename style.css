@@ -99,9 +99,10 @@ body{
 }
 
 .header-main-logo {
-    width: 27%;
-    height: 50%;
     text-align: center;
+    width: 8vw; 
+    max-width: 200px;
+    display: flex;
 }
 
 .header-main-nav {
