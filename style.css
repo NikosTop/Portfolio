@@ -94,6 +94,8 @@ body{
     width: 100%;
     display: flex;
     justify-content: space-between;
+    height: 100%;
+    align-items: center;
 }
 
 .header-main-logo {
@@ -117,7 +119,6 @@ body{
 }
 
 .mainMenu li{
-    padding-left: 19px;
     padding-right: 19px;
     text-decoration: none;
 }
@@ -153,9 +154,7 @@ font-size: 33px;
 }
 
 .header-main-contact {
-    margin-top: 19px;
     width: 33%;
-    height:100%;
     z-index: 1;
     text-align:center
 }
@@ -425,7 +424,6 @@ font-size: 33px;
     
     .openMenu{
         display: block;
-        padding-left: 13px;
     }
 
     .mainMenu li a:hover{
