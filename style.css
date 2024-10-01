@@ -504,6 +504,10 @@ font-size: 33px;
 
 @media only screen and (max-width: 600px) {
     
+    .header-main-logo {
+        width: 11vw;
+    }
+    
     .imgnikos {
         background: url(Profile\ Picture\ Mobile.png);
         background-repeat: no-repeat;
@@ -600,6 +604,10 @@ font-size: 33px;
 }
 
 @media only screen and (max-width: 480px) {
+
+    .header-main-logo {
+        width: 12vw;
+    }
 
     .imgnikos {
         background: url(Profile\ Picture\ Mobile.png);
