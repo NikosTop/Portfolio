@@ -212,3 +212,17 @@ body{
         font-size: 8.5vw;
     }
 }
+
+@media only screen and (max-width: 600px) {
+
+    .header-main-logo {
+        width: 11vw;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+
+    .header-main-logo {
+        width: 12vw;
+    }
+}
