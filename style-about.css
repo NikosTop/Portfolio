@@ -41,10 +41,10 @@ body{
 }
 
 .header-main-logo {
-    width: 33%;
-    height: 50%;
-    z-index: 1;
     text-align: center;
+    width: 6vw; 
+    max-width: 200px;
+    display: flex;
 }
 
 .openMenu a{
