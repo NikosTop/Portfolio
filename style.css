@@ -452,7 +452,7 @@ font-size: 33px;
     }
     
     .undername {
-        font-size: 1vw;
+        font-size: 1.2vw;
     }
     
     .header-main-contact a {
@@ -477,7 +477,7 @@ font-size: 33px;
 
     .undername {
         font-family: 'Josefin Sans', sans-serif;
-        font-size: 2vw;
+        font-size: 9px;
         line-height: 109%;
         font-weight: 500;
         margin-bottom: 30px;
@@ -504,10 +504,6 @@ font-size: 33px;
 
     .name {
         margin-bottom: 10px;
-    }
-
-    .undername {
-        font-size: 1.1vw;
     }
 
     .skillspans {
