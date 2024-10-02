@@ -462,7 +462,7 @@ font-size: 33px;
     }
 }
 
-@media (orientation: landscape) and (max-width: 768px) {
+@media (orientation: landscape) and (max-width: 840px) {
 
     .name {
     font-size: 5.5vw;
@@ -494,7 +494,7 @@ font-size: 33px;
     }
 }
 
-@media (orientation: landscape) and (max-width: 600px){
+@media (orientation: landscape) and (max-width: 751px){
     
     .header-main-contact a {
     margin-right: -47px;
