@@ -475,7 +475,7 @@ font-size: 33px;
 
     .undername {
     font-family: 'Josefin Sans', sans-serif;
-    font-size: 1.5vw;
+    font-size: 2vw;
     line-height: 109%;
     font-weight: 500;
     margin-bottom: 30px;
@@ -498,6 +498,10 @@ font-size: 33px;
     
     .header-main-contact a {
     margin-right: -47px;
+    }
+
+    .undername {
+    font-size: 1vw;
     }
 }
 
@@ -562,6 +566,10 @@ font-size: 33px;
         padding: 0px;
         padding-top: 7px;
         text-align: center;
+    }
+
+    .header-main-nav ul li a{
+        font-size: 5vw;
     }
 
     .htmlspan, .graphicspan, .wordpressspan, .cssspan, .ecommercespan, .javascriptspan {
