@@ -462,7 +462,7 @@ font-size: 33px;
     }
 }
 
-@media (orientation: landscape) and (max-width: 840px) {
+@media (orientation: landscape) and (max-width: 750px) {
 
     .name {
     font-size: 5.5vw;
@@ -475,7 +475,7 @@ font-size: 33px;
 
     .undername {
     font-family: 'Josefin Sans', sans-serif;
-    font-size: 2vw;
+    font-size: 1vw;
     line-height: 109%;
     font-weight: 500;
     margin-bottom: 30px;
@@ -494,14 +494,14 @@ font-size: 33px;
     }
 }
 
-@media (orientation: landscape) and (max-width: 751px){
+@media (orientation: landscape) and (max-width: 600px){
     
     .header-main-contact a {
     margin-right: -47px;
     }
 
     .undername {
-    font-size: 1vw;
+    font-size: 2vw;
     }
 }
 
