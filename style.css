@@ -443,14 +443,14 @@ font-size: 33px;
     
 }
 
-@media only screen and (max-device-width : 850px) and (orientation : landscape){
+@media only screen and (min-device-width : 721px) and (orientation : landscape){
 
     .name {
         margin-bottom: 0px;
     }
     
     .undername {
-        font-size: 2vw;
+        font-size: 1.8vw;
     }
     
     .header-main-contact a {
@@ -462,7 +462,7 @@ font-size: 33px;
     }
 }
 
-@media (orientation: landscape) and (max-width: 750px) {
+@media (orientation: landscape) and (min-width: 721px) {
 
     .name {
     font-size: 5.5vw;
@@ -475,7 +475,7 @@ font-size: 33px;
 
     .undername {
     font-family: 'Josefin Sans', sans-serif;
-    font-size: 1vw;
+    font-size: 1.8vw;
     line-height: 109%;
     font-weight: 500;
     margin-bottom: 30px;
@@ -494,14 +494,14 @@ font-size: 33px;
     }
 }
 
-@media (orientation: landscape) and (max-width: 600px){
+@media (orientation: landscape) and (max-width: 720px){
     
     .header-main-contact a {
     margin-right: -47px;
     }
 
     .undername {
-    font-size: 2vw;
+    font-size: 1.3vw;
     }
 }
 
