@@ -468,7 +468,7 @@ font-size: 33px;
     }
 }
 
-@media (orientation: landscape) and (min-width: 721px) {
+@media (orientation: landscape) and (min-width: 721px) and (max-width: 900) {
 
     .name {
     font-size: 5.5vw;
@@ -507,7 +507,7 @@ font-size: 33px;
     }
 
     .undername {
-    font-size: 1vw;
+    font-size: 1.1vw;
     }
 }
 
