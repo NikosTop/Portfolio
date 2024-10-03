@@ -470,7 +470,7 @@ font-size: 33px;
 @media screen and (min-width: 812px) and (max-width: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape) {
     
     .undername {
-        font-size: 1.5vw
+        font-size: 1.2vw
     }
 }
 
