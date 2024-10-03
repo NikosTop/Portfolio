@@ -117,9 +117,6 @@ body{
 .mainMenu{
     list-style-type: none;
     display: flex;
-    background: #ffffffd6;
-    backdrop-filter: blur(7px);
-    -webkit-backdrop-filter: blur(7px);
 }
 
 .mainMenu li{
@@ -405,6 +402,9 @@ font-size: 33px;
 @media only screen and (max-width: 1024px) {
 
     .mainMenu{
+        backdrop-filter: blur(7px);
+        -webkit-backdrop-filter: blur(7px);
+        background: #ffffffd6;
         height: 35vh;
         position: fixed;
         left: 0px;
