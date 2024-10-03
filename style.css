@@ -117,6 +117,8 @@ body{
 .mainMenu{
     list-style-type: none;
     display: flex;
+    background: ffffffb8;
+    backdrop-filter: blur(7px);
 }
 
 .mainMenu li{
@@ -410,7 +412,6 @@ font-size: 33px;
         flex-direction: column;
         justify-content: space-evenly;
         align-items: center;
-        background: #ffffff;
         transition: top 1s ease;
         font-size: 1.3rem;
         margin: auto;
@@ -470,7 +471,7 @@ font-size: 33px;
 @media screen and (min-width: 812px) and (max-width: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape) {
     
     .undername {
-        font-size: 1.2vw
+        font-size: 1.1vw
     }
 }
 
