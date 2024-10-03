@@ -444,6 +444,10 @@ font-size: 33px;
     .fa-bars:before {
         font-size: 33px;
     }
+
+    .skillspans {
+        font-size: 1.7vw;
+    }
     
 }
 
