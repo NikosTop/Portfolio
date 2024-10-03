@@ -464,8 +464,7 @@ font-size: 33px;
     }
 }
 
-@media (min-width: 813px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 3),
-       (min-width: 813px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 4) {
+@media (min-width: 813px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 3),{
            
            .undername {
                font-size: 2vw
