@@ -421,8 +421,18 @@ body{
     letter-spacing: 6px;
     margin-bottom: 3vw;
     text-align: center;
+    transition: opacity 0.8s ease, transform 0.8s ease;
 }
 
+.hidden-title {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.show-title {
+    opacity: 1;
+    transform: translateY(0);
+}
 
 .slide {
     min-width: 320px;
