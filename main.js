@@ -227,9 +227,11 @@ document.addEventListener("DOMContentLoaded", function() {
 //     });
 // });
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", function () {
     const title = document.querySelector(".video-title");
+
     setTimeout(() => {
+        title.classList.remove("hidden-title");
         title.classList.add("show-title");
     }, 1500);
 });
