@@ -244,81 +244,92 @@ document.addEventListener("DOMContentLoaded", function () {
     const nextBtn = document.querySelector(".next");
 
     let index = 0;
+    let slideWidth;
+    let autoPlay;
     let isDragging = false;
-    let startPos = 0;
+    let startX = 0;
     let currentTranslate = 0;
     let prevTranslate = 0;
-    let animationID;
-    let slideWidth = slides[0].offsetWidth + 20;
 
-    window.addEventListener("resize", () => {
-        slideWidth = slides[0].offsetWidth + 20;
-        moveToSlide();
-    });
+    function updateWidth() {
+        slideWidth = slides[0].getBoundingClientRect().width + 20;
+        moveToIndex();
+    }
 
-    function moveToSlide() {
+    window.addEventListener("resize", updateWidth);
+    updateWidth();
+
+    function moveToIndex() {
         currentTranslate = -index * slideWidth;
         prevTranslate = currentTranslate;
         track.style.transform = `translateX(${currentTranslate}px)`;
     }
 
     function nextSlide() {
-        if (index < slides.length - 1) {
-            index++;
-        } else {
-            index = 0;
+        index++;
+        if (index >= slides.length) {
+            index = 0; // LOOP BACK
         }
-        moveToSlide();
+        moveToIndex();
     }
 
     function prevSlide() {
-        if (index > 0) {
-            index--;
-        } else {
+        index--;
+        if (index < 0) {
             index = slides.length - 1;
         }
-        moveToSlide();
+        moveToIndex();
     }
 
     nextBtn.addEventListener("click", nextSlide);
     prevBtn.addEventListener("click", prevSlide);
 
+    function startAuto() {
+        autoPlay = setInterval(nextSlide, 3500);
+    }
+
+    function stopAuto() {
+        clearInterval(autoPlay);
+    }
+
+    startAuto();
+
+    track.addEventListener("mouseenter", stopAuto);
+    track.addEventListener("mouseleave", startAuto);
+
     // ===== DRAG SYSTEM =====
 
     function getPositionX(e) {
-        return e.type.includes("mouse") ? e.pageX : e.touches[0].clientX;
+        return e.type.includes("mouse")
+            ? e.pageX
+            : e.touches[0].clientX;
     }
 
     function dragStart(e) {
         isDragging = true;
-        startPos = getPositionX(e);
-        animationID = requestAnimationFrame(animation);
-        track.style.transition = "none";
+        startX = getPositionX(e);
+        stopAuto();
     }
 
     function dragMove(e) {
         if (!isDragging) return;
         const currentPosition = getPositionX(e);
-        const diff = currentPosition - startPos;
-        currentTranslate = prevTranslate + diff;
+        const diff = currentPosition - startX;
+        track.style.transform = `translateX(${prevTranslate + diff}px)`;
     }
 
-    function dragEnd() {
-        cancelAnimationFrame(animationID);
+    function dragEnd(e) {
+        if (!isDragging) return;
         isDragging = false;
 
-        const movedBy = currentTranslate - prevTranslate;
+        const movedBy =
+            parseFloat(track.style.transform.replace("translateX(", "").replace("px)", "")) - prevTranslate;
 
-        if (movedBy < -100 && index < slides.length - 1) index++;
-        if (movedBy > 100 && index > 0) index--;
+        if (movedBy < -100) nextSlide();
+        else if (movedBy > 100) prevSlide();
+        else moveToIndex();
 
-        track.style.transition = "transform 0.4s ease";
-        moveToSlide();
-    }
-
-    function animation() {
-        track.style.transform = `translateX(${currentTranslate}px)`;
-        if (isDragging) requestAnimationFrame(animation);
+        startAuto();
     }
 
     track.addEventListener("mousedown", dragStart);

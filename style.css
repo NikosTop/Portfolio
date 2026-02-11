@@ -438,7 +438,7 @@ body{
 .slide {
     flex: 0 0 auto;
     width: 22vw;
-    height: 39vw; /* 9:16 ratio */
+    height: 39vw;
     max-width: 320px;
     max-height: 568px;
     border-radius: 20px;
@@ -449,10 +449,6 @@ body{
 
 .slide:hover {
     transform: scale(1.05);
-}
-
-.slide iframe {
-    pointer-events: none;
 }
 
 /* Navigation Buttons */
