@@ -231,6 +231,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const title = document.querySelector(".video-title");
 
     setTimeout(() => {
+        title.classList.remove("hidden-title");
         title.classList.add("show-title");
     }, 1500);
 });
@@ -238,104 +239,95 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener("DOMContentLoaded", function () {
 
     const track = document.querySelector(".slide-track");
-    const slides = Array.from(track.children);
+    const slides = document.querySelectorAll(".slide");
     const prevBtn = document.querySelector(".prev");
     const nextBtn = document.querySelector(".next");
 
     let index = 0;
-    let slideWidth;
-    let autoScroll;
     let isDragging = false;
-    let startX;
+    let startPos = 0;
     let currentTranslate = 0;
     let prevTranslate = 0;
+    let animationID;
+    let slideWidth = slides[0].offsetWidth + 20;
 
-    function updateSlideWidth() {
-        slideWidth = slides[0].getBoundingClientRect().width + 20;
-    }
-
-    updateSlideWidth();
-    window.addEventListener("resize", updateSlideWidth);
-
-    slides.forEach(slide => {
-        const clone = slide.cloneNode(true);
-        track.appendChild(clone);
+    window.addEventListener("resize", () => {
+        slideWidth = slides[0].offsetWidth + 20;
+        moveToSlide();
     });
 
-    const totalSlides = slides.length;
-
-    function moveToIndex() {
+    function moveToSlide() {
         currentTranslate = -index * slideWidth;
         prevTranslate = currentTranslate;
         track.style.transform = `translateX(${currentTranslate}px)`;
     }
 
     function nextSlide() {
-        index++;
-        if (index >= totalSlides) index = 0;
-        moveToIndex();
+        if (index < slides.length - 1) {
+            index++;
+        } else {
+            index = 0;
+        }
+        moveToSlide();
     }
 
     function prevSlide() {
-        index--;
-        if (index < 0) index = totalSlides - 1;
-        moveToIndex();
+        if (index > 0) {
+            index--;
+        } else {
+            index = slides.length - 1;
+        }
+        moveToSlide();
     }
 
-    nextBtn?.addEventListener("click", nextSlide);
-    prevBtn?.addEventListener("click", prevSlide);
+    nextBtn.addEventListener("click", nextSlide);
+    prevBtn.addEventListener("click", prevSlide);
 
-    function startAuto() {
-        autoScroll = setInterval(nextSlide, 3500);
+    // ===== DRAG SYSTEM =====
+
+    function getPositionX(e) {
+        return e.type.includes("mouse") ? e.pageX : e.touches[0].clientX;
     }
 
-    function stopAuto() {
-        clearInterval(autoScroll);
-    }
-
-    track.addEventListener("mouseenter", stopAuto);
-    track.addEventListener("mouseleave", startAuto);
-
-    function getPositionX(event) {
-        return event.type.includes("mouse")
-            ? event.pageX
-            : event.touches[0].clientX;
-    }
-
-    function startDrag(event) {
-        stopAuto();
+    function dragStart(e) {
         isDragging = true;
-        startX = getPositionX(event);
+        startPos = getPositionX(e);
+        animationID = requestAnimationFrame(animation);
+        track.style.transition = "none";
     }
 
-    function drag(event) {
+    function dragMove(e) {
         if (!isDragging) return;
-        const currentPosition = getPositionX(event);
-        const diff = currentPosition - startX;
-        track.style.transform = `translateX(${prevTranslate + diff}px)`;
+        const currentPosition = getPositionX(e);
+        const diff = currentPosition - startPos;
+        currentTranslate = prevTranslate + diff;
     }
 
-    function endDrag(event) {
-        if (!isDragging) return;
+    function dragEnd() {
+        cancelAnimationFrame(animationID);
         isDragging = false;
 
-        const movedBy = parseFloat(track.style.transform.replace("translateX(", "").replace("px)", "")) - prevTranslate;
+        const movedBy = currentTranslate - prevTranslate;
 
-        if (movedBy < -100) nextSlide();
-        else if (movedBy > 100) prevSlide();
-        else moveToIndex();
+        if (movedBy < -100 && index < slides.length - 1) index++;
+        if (movedBy > 100 && index > 0) index--;
 
-        startAuto();
+        track.style.transition = "transform 0.4s ease";
+        moveToSlide();
     }
 
-    track.addEventListener("mousedown", startDrag);
-    track.addEventListener("mousemove", drag);
-    track.addEventListener("mouseup", endDrag);
-    track.addEventListener("mouseleave", endDrag);
+    function animation() {
+        track.style.transform = `translateX(${currentTranslate}px)`;
+        if (isDragging) requestAnimationFrame(animation);
+    }
 
-    track.addEventListener("touchstart", startDrag);
-    track.addEventListener("touchmove", drag);
-    track.addEventListener("touchend", endDrag);
+    track.addEventListener("mousedown", dragStart);
+    track.addEventListener("mousemove", dragMove);
+    track.addEventListener("mouseup", dragEnd);
+    track.addEventListener("mouseleave", dragEnd);
 
-    startAuto();
+    track.addEventListener("touchstart", dragStart);
+    track.addEventListener("touchmove", dragMove);
+    track.addEventListener("touchend", dragEnd);
+
 });
