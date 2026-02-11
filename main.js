@@ -188,41 +188,124 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
-document.addEventListener("DOMContentLoaded", function() {
-    const titleElement = document.querySelector('.projects-h1');
+// document.addEventListener("DOMContentLoaded", function() {
+//     const titleElement = document.querySelector('.projects-h1');
 
-    window.addEventListener('scroll', function() {
+//     window.addEventListener('scroll', function() {
 
-        const scrollHeight = document.documentElement.scrollHeight;
-        const clientHeight = window.innerHeight;
+//         const scrollHeight = document.documentElement.scrollHeight;
+//         const clientHeight = window.innerHeight;
 
-        const seventyPercent = 0.05 * scrollHeight;
+//         const seventyPercent = 0.05 * scrollHeight;
 
-        if (window.scrollY > seventyPercent) {
-            titleElement.classList.add('fade-in');
-        }
+//         if (window.scrollY > seventyPercent) {
+//             titleElement.classList.add('fade-in');
+//         }
+//     });
+// });
+
+// document.addEventListener("DOMContentLoaded", function() {
+//     const project1Element = document.querySelector('.project1');
+//     const project2Element = document.querySelector('.project2');
+//     const project3Element = document.querySelector('.project3');
+
+//     function checkFadeIn(element, delay) {
+//         const scrollHeight = document.documentElement.scrollHeight;
+//         const seventyPercent = 0.07 * scrollHeight;
+
+//         if (window.scrollY > seventyPercent) {
+//             setTimeout(function() {
+//                 element.classList.add('fade-in');
+//             }, delay);
+//         }
+//     }
+
+//     window.addEventListener('scroll', function() {
+//         checkFadeIn(project1Element, 0);
+//         checkFadeIn(project2Element, 750);
+//         checkFadeIn(project3Element, 1500); 
+//     });
+// });
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const track = document.querySelector(".slide-track");
+    const slides = Array.from(track.children);
+    const prevBtn = document.querySelector(".prev");
+    const nextBtn = document.querySelector(".next");
+
+    let index = 0;
+    let slideWidth = slides[0].offsetWidth + 25;
+    let autoScroll;
+
+    // Clone slides for infinite effect
+    slides.forEach(slide => {
+        const clone = slide.cloneNode(true);
+        track.appendChild(clone);
     });
-});
 
-document.addEventListener("DOMContentLoaded", function() {
-    const project1Element = document.querySelector('.project1');
-    const project2Element = document.querySelector('.project2');
-    const project3Element = document.querySelector('.project3');
-
-    function checkFadeIn(element, delay) {
-        const scrollHeight = document.documentElement.scrollHeight;
-        const seventyPercent = 0.07 * scrollHeight;
-
-        if (window.scrollY > seventyPercent) {
-            setTimeout(function() {
-                element.classList.add('fade-in');
-            }, delay);
-        }
+    function moveToSlide() {
+        track.style.transform = `translateX(-${index * slideWidth}px)`;
     }
 
-    window.addEventListener('scroll', function() {
-        checkFadeIn(project1Element, 0);
-        checkFadeIn(project2Element, 750);
-        checkFadeIn(project3Element, 1500); 
+    function startAutoScroll() {
+        autoScroll = setInterval(() => {
+            index++;
+            moveToSlide();
+        }, 3000);
+    }
+
+    function stopAutoScroll() {
+        clearInterval(autoScroll);
+    }
+
+    nextBtn.addEventListener("click", () => {
+        index++;
+        moveToSlide();
     });
+
+    prevBtn.addEventListener("click", () => {
+        index = index > 0 ? index - 1 : 0;
+        moveToSlide();
+    });
+
+    // Pause on hover
+    track.addEventListener("mouseenter", stopAutoScroll);
+    track.addEventListener("mouseleave", startAutoScroll);
+
+    // Drag / Swipe
+    let startX = 0;
+    let isDragging = false;
+
+    track.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        startX = e.pageX;
+        stopAutoScroll();
+    });
+
+    track.addEventListener("mouseup", (e) => {
+        if (!isDragging) return;
+        let diff = e.pageX - startX;
+        if (diff > 50) index--;
+        if (diff < -50) index++;
+        moveToSlide();
+        isDragging = false;
+        startAutoScroll();
+    });
+
+    track.addEventListener("touchstart", (e) => {
+        startX = e.touches[0].clientX;
+        stopAutoScroll();
+    });
+
+    track.addEventListener("touchend", (e) => {
+        let diff = e.changedTouches[0].clientX - startX;
+        if (diff > 50) index--;
+        if (diff < -50) index++;
+        moveToSlide();
+        startAutoScroll();
+    });
+
+    startAutoScroll();
+
 });
