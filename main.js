@@ -242,53 +242,51 @@ document.addEventListener("DOMContentLoaded", function () {
     const prevBtn = document.querySelector(".prev");
     const nextBtn = document.querySelector(".next");
 
-    let slideWidth = slides[0].offsetWidth + 25;
     let index = 0;
+    let slideWidth;
     let autoScroll;
     let isDragging = false;
     let startX;
     let currentTranslate = 0;
     let prevTranslate = 0;
 
-    // Clone slides for infinite effect
+    function updateSlideWidth() {
+        slideWidth = slides[0].getBoundingClientRect().width + 20;
+    }
+
+    updateSlideWidth();
+    window.addEventListener("resize", updateSlideWidth);
+
     slides.forEach(slide => {
         const clone = slide.cloneNode(true);
         track.appendChild(clone);
     });
 
-    const totalSlides = track.children.length / 2;
-
-    function setPosition() {
-        track.style.transform = `translateX(${currentTranslate}px)`;
-    }
+    const totalSlides = slides.length;
 
     function moveToIndex() {
         currentTranslate = -index * slideWidth;
         prevTranslate = currentTranslate;
-        setPosition();
+        track.style.transform = `translateX(${currentTranslate}px)`;
     }
 
     function nextSlide() {
         index++;
-        if (index >= totalSlides) {
-            index = 0;
-        }
+        if (index >= totalSlides) index = 0;
         moveToIndex();
     }
 
     function prevSlide() {
         index--;
-        if (index < 0) {
-            index = totalSlides - 1;
-        }
+        if (index < 0) index = totalSlides - 1;
         moveToIndex();
     }
 
-    prevBtn.addEventListener("click", prevSlide);
-    nextBtn.addEventListener("click", nextSlide);
+    nextBtn?.addEventListener("click", nextSlide);
+    prevBtn?.addEventListener("click", prevSlide);
 
     function startAuto() {
-        autoScroll = setInterval(nextSlide, 3000);
+        autoScroll = setInterval(nextSlide, 3500);
     }
 
     function stopAuto() {
@@ -298,17 +296,11 @@ document.addEventListener("DOMContentLoaded", function () {
     track.addEventListener("mouseenter", stopAuto);
     track.addEventListener("mouseleave", startAuto);
 
-    // DRAG FUNCTIONALITY
-
-    track.addEventListener("mousedown", startDrag);
-    track.addEventListener("touchstart", startDrag);
-
-    track.addEventListener("mouseup", endDrag);
-    track.addEventListener("mouseleave", endDrag);
-    track.addEventListener("touchend", endDrag);
-
-    track.addEventListener("mousemove", drag);
-    track.addEventListener("touchmove", drag);
+    function getPositionX(event) {
+        return event.type.includes("mouse")
+            ? event.pageX
+            : event.touches[0].clientX;
+    }
 
     function startDrag(event) {
         stopAuto();
@@ -318,18 +310,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function drag(event) {
         if (!isDragging) return;
-
         const currentPosition = getPositionX(event);
         const diff = currentPosition - startX;
-        currentTranslate = prevTranslate + diff;
-        setPosition();
+        track.style.transform = `translateX(${prevTranslate + diff}px)`;
     }
 
     function endDrag(event) {
         if (!isDragging) return;
-
         isDragging = false;
-        const movedBy = currentTranslate - prevTranslate;
+
+        const movedBy = parseFloat(track.style.transform.replace("translateX(", "").replace("px)", "")) - prevTranslate;
 
         if (movedBy < -100) nextSlide();
         else if (movedBy > 100) prevSlide();
@@ -338,12 +328,14 @@ document.addEventListener("DOMContentLoaded", function () {
         startAuto();
     }
 
-    function getPositionX(event) {
-        return event.type.includes("mouse")
-            ? event.pageX
-            : event.touches[0].clientX;
-    }
+    track.addEventListener("mousedown", startDrag);
+    track.addEventListener("mousemove", drag);
+    track.addEventListener("mouseup", endDrag);
+    track.addEventListener("mouseleave", endDrag);
+
+    track.addEventListener("touchstart", startDrag);
+    track.addEventListener("touchmove", drag);
+    track.addEventListener("touchend", endDrag);
 
     startAuto();
-
 });
