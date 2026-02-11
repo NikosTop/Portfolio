@@ -228,6 +228,14 @@ document.addEventListener("DOMContentLoaded", function() {
 // });
 
 document.addEventListener("DOMContentLoaded", function () {
+    const title = document.querySelector(".video-title");
+
+    setTimeout(() => {
+        title.classList.add("show-title");
+    }, 1500);
+});
+
+document.addEventListener("DOMContentLoaded", function () {
 
     const track = document.querySelector(".slide-track");
     const slides = Array.from(track.children);
