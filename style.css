@@ -390,13 +390,14 @@ body{
 
 .video-slider-section {
     margin-top: 8vw;
-    width: 100%;
-    overflow: hidden;
+    position: relative;
 }
 
-.prev { left: 0; }
-.next { right: 0; }
-.slider-wrapper { position: relative; }
+.slider-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
 
 .slider {
     overflow: hidden;
@@ -405,9 +406,8 @@ body{
 
 .slide-track {
     display: flex;
-    gap: 20px;
-    transition: transform 0.5s ease;
-    will-change: transform;
+    gap: 25px;
+    transition: transform 0.6s ease;
     cursor: grab;
 }
 
@@ -421,33 +421,27 @@ body{
     letter-spacing: 6px;
     margin-bottom: 3vw;
     text-align: center;
-    transition: opacity 0.8s ease, transform 0.8s ease;
 }
 
-.show-title {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.hidden-title {
-    opacity: 0;
-    transform: translateY(20px);
-}
 
 .slide {
-    flex: 0 0 auto;
-    width: 22vw;
-    height: 39vw;
-    max-width: 320px;
-    max-height: 568px;
+    min-width: 320px;
+    height: 568px; /* 9:16 */
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-    transition: transform 0.3s ease;
+    flex-shrink: 0;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    transition: transform 0.4s ease;
 }
 
 .slide:hover {
     transform: scale(1.05);
+}
+
+.slide iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
 }
 
 /* Navigation Buttons */
@@ -478,6 +472,24 @@ body{
 }
 
 /* Responsive */
+
+@media (max-width: 1024px) {
+    .slide {
+        min-width: 250px;
+        height: 444px;
+    }
+}
+
+@media (max-width: 600px) {
+    .slide {
+        min-width: 200px;
+        height: 355px;
+    }
+
+    .slider-btn {
+        display: none;
+    }
+}
 
 @media only screen and (max-width: 1024px) {
 
@@ -517,11 +529,6 @@ body{
 
     .header-main-nav ul li a{
         background: none;
-    }
-
-    .slide {
-        width: 35vw;
-        height: 62vw;
     }
     
 }
@@ -603,23 +610,39 @@ body{
     .htmlspan, .graphicspan, .wordpressspan, .cssspan, .ecommercespan, .javascriptspan {
         font-size: 3.7vw;
     }
-    
-    .slide {
-        width: 65vw;
-        height: 115vw;
-    }
 
-    .slider-btn {
-        display: none;
+    .projects-h1 {
+        font-size: 6.5vw;
+        padding-top: 15px;
     }
-
-    .video-title {
-        font-size: 7vw;
+    .project-images {
+        text-align: center;
+        display: block;
     }
-
+    .project1 {
+        margin-top: 11%;
+    }
+    .project2 {
+        margin-top: 11.1vw;
+    }
+    .nikostop-img, .perfumist-img, .happyfarm-img {
+        height: 65vw;
+        margin-left: 10%;
+    }
+    .happyfarm01, .nikostop01, .perfumist01 {
+        font-size: 7.3vw;
+    }
+    .button-happyfarm, .button-nikostop, .button-perfumist {
+        font-size: 4.3vw;
+        transform: translate(-1%, 5%);
+    }
+    section#about {
+        margin-top: -13vw;
+    }
     #topBtn {
         padding: 2vw;
     }
+
 }
 
 @media only screen and (max-width: 480px) {
