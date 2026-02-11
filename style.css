@@ -408,7 +408,21 @@ body{
     display: flex;
     gap: 25px;
     transition: transform 0.6s ease;
+    cursor: grab;
 }
+
+.slide-track:active {
+    cursor: grabbing;
+}
+
+.video-title {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 3vw;
+    letter-spacing: 6px;
+    margin-bottom: 3vw;
+    text-align: center;
+}
+
 
 .slide {
     min-width: 320px;
@@ -476,7 +490,6 @@ body{
         display: none;
     }
 }
-
 
 @media only screen and (max-width: 1024px) {
 

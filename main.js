@@ -234,9 +234,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const prevBtn = document.querySelector(".prev");
     const nextBtn = document.querySelector(".next");
 
-    let index = 0;
     let slideWidth = slides[0].offsetWidth + 25;
+    let index = 0;
     let autoScroll;
+    let isDragging = false;
+    let startX;
+    let currentTranslate = 0;
+    let prevTranslate = 0;
 
     // Clone slides for infinite effect
     slides.forEach(slide => {
@@ -244,68 +248,94 @@ document.addEventListener("DOMContentLoaded", function () {
         track.appendChild(clone);
     });
 
-    function moveToSlide() {
-        track.style.transform = `translateX(-${index * slideWidth}px)`;
+    const totalSlides = track.children.length / 2;
+
+    function setPosition() {
+        track.style.transform = `translateX(${currentTranslate}px)`;
     }
 
-    function startAutoScroll() {
-        autoScroll = setInterval(() => {
-            index++;
-            moveToSlide();
-        }, 3000);
+    function moveToIndex() {
+        currentTranslate = -index * slideWidth;
+        prevTranslate = currentTranslate;
+        setPosition();
     }
 
-    function stopAutoScroll() {
+    function nextSlide() {
+        index++;
+        if (index >= totalSlides) {
+            index = 0;
+        }
+        moveToIndex();
+    }
+
+    function prevSlide() {
+        index--;
+        if (index < 0) {
+            index = totalSlides - 1;
+        }
+        moveToIndex();
+    }
+
+    prevBtn.addEventListener("click", prevSlide);
+    nextBtn.addEventListener("click", nextSlide);
+
+    function startAuto() {
+        autoScroll = setInterval(nextSlide, 3000);
+    }
+
+    function stopAuto() {
         clearInterval(autoScroll);
     }
 
-    nextBtn.addEventListener("click", () => {
-        index++;
-        moveToSlide();
-    });
+    track.addEventListener("mouseenter", stopAuto);
+    track.addEventListener("mouseleave", startAuto);
 
-    prevBtn.addEventListener("click", () => {
-        index = index > 0 ? index - 1 : 0;
-        moveToSlide();
-    });
+    // DRAG FUNCTIONALITY
 
-    // Pause on hover
-    track.addEventListener("mouseenter", stopAutoScroll);
-    track.addEventListener("mouseleave", startAutoScroll);
+    track.addEventListener("mousedown", startDrag);
+    track.addEventListener("touchstart", startDrag);
 
-    // Drag / Swipe
-    let startX = 0;
-    let isDragging = false;
+    track.addEventListener("mouseup", endDrag);
+    track.addEventListener("mouseleave", endDrag);
+    track.addEventListener("touchend", endDrag);
 
-    track.addEventListener("mousedown", (e) => {
+    track.addEventListener("mousemove", drag);
+    track.addEventListener("touchmove", drag);
+
+    function startDrag(event) {
+        stopAuto();
         isDragging = true;
-        startX = e.pageX;
-        stopAutoScroll();
-    });
+        startX = getPositionX(event);
+    }
 
-    track.addEventListener("mouseup", (e) => {
+    function drag(event) {
         if (!isDragging) return;
-        let diff = e.pageX - startX;
-        if (diff > 50) index--;
-        if (diff < -50) index++;
-        moveToSlide();
+
+        const currentPosition = getPositionX(event);
+        const diff = currentPosition - startX;
+        currentTranslate = prevTranslate + diff;
+        setPosition();
+    }
+
+    function endDrag(event) {
+        if (!isDragging) return;
+
         isDragging = false;
-        startAutoScroll();
-    });
+        const movedBy = currentTranslate - prevTranslate;
 
-    track.addEventListener("touchstart", (e) => {
-        startX = e.touches[0].clientX;
-        stopAutoScroll();
-    });
+        if (movedBy < -100) nextSlide();
+        else if (movedBy > 100) prevSlide();
+        else moveToIndex();
 
-    track.addEventListener("touchend", (e) => {
-        let diff = e.changedTouches[0].clientX - startX;
-        if (diff > 50) index--;
-        if (diff < -50) index++;
-        moveToSlide();
-        startAutoScroll();
-    });
+        startAuto();
+    }
 
-    startAutoScroll();
+    function getPositionX(event) {
+        return event.type.includes("mouse")
+            ? event.pageX
+            : event.touches[0].clientX;
+    }
+
+    startAuto();
 
 });
