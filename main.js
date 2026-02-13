@@ -240,6 +240,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const track = document.querySelector(".slide-track");
     const slides = Array.from(track.children);
+    const iframes = track.querySelectorAll("iframe");
     const prevBtn = document.querySelector(".prev");
     const nextBtn = document.querySelector(".next");
 
@@ -315,6 +316,11 @@ document.addEventListener("DOMContentLoaded", function () {
         stopAuto();
         isDragging = true;
         startX = getPositionX(event);
+
+        // Disable iframe pointer events while dragging
+        iframes.forEach(iframe => {
+            iframe.style.pointerEvents = "none";
+        });
     }
 
     function drag(event) {
@@ -335,6 +341,11 @@ document.addEventListener("DOMContentLoaded", function () {
         if (movedBy < -100) nextSlide();
         else if (movedBy > 100) prevSlide();
         else moveToIndex();
+
+        // Re-enable iframe pointer events
+        iframes.forEach(iframe => {
+            iframe.style.pointerEvents = "auto";
+        });
 
         startAuto();
     }
