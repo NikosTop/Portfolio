@@ -382,10 +382,6 @@ body{
     background-color: rgb(255, 94, 0); /* Add a dark-grey background on hover */
 }
 
-/* ========================= */
-/* VIDEO SLIDER */
-/* ========================= */
-
 /* ================= PREMIUM VIDEO SLIDER ================= */
 
 .video-slider-section {
@@ -420,7 +416,6 @@ body{
     font-size: 3vw;
     letter-spacing: 6px;
     margin-bottom: 3vw;
-    text-align: center;
     transition: opacity 0.8s ease, transform 0.8s ease;
 }
 
@@ -483,24 +478,6 @@ body{
 
 /* Responsive */
 
-@media (max-width: 1024px) {
-    .slide {
-        min-width: 250px;
-        height: 444px;
-    }
-}
-
-@media (max-width: 600px) {
-    .slide {
-        min-width: 200px;
-        height: 355px;
-    }
-
-    .slider-btn {
-        display: none;
-    }
-}
-
 @media only screen and (max-width: 1024px) {
 
     .mainMenu{
@@ -539,6 +516,11 @@ body{
 
     .header-main-nav ul li a{
         background: none;
+    }
+
+    .slide {
+        min-width: 250px;
+        height: 444px;
     }
     
 }
@@ -621,36 +603,20 @@ body{
         font-size: 3.7vw;
     }
 
-    .projects-h1 {
-        font-size: 6.5vw;
-        padding-top: 15px;
-    }
-    .project-images {
-        text-align: center;
-        display: block;
-    }
-    .project1 {
-        margin-top: 11%;
-    }
-    .project2 {
-        margin-top: 11.1vw;
-    }
-    .nikostop-img, .perfumist-img, .happyfarm-img {
-        height: 65vw;
-        margin-left: 10%;
-    }
-    .happyfarm01, .nikostop01, .perfumist01 {
-        font-size: 7.3vw;
-    }
-    .button-happyfarm, .button-nikostop, .button-perfumist {
-        font-size: 4.3vw;
-        transform: translate(-1%, 5%);
-    }
     section#about {
         margin-top: -13vw;
     }
     #topBtn {
         padding: 2vw;
+    }
+
+    .slide {
+        min-width: 200px;
+        height: 355px;
+    }
+
+    .slider-btn {
+        display: none;
     }
 
 }
@@ -721,31 +687,7 @@ body{
     .skillspans {
         word-spacing: 3px;
     }
-    .projects-h1 {
-        font-size: 6.5vw;
-        padding-top: 15px;
-    }
-    .project-images {
-        text-align: center;
-        display: block;
-    }
-    .project1 {
-        margin-top: 11%;
-    }
-    .project2 {
-        margin-top: 11.1vw;
-    }
-    .nikostop-img, .perfumist-img, .happyfarm-img {
-        height: 65vw;
-        margin-left: 10%;
-    }
-    .happyfarm01, .nikostop01, .perfumist01 {
-        font-size: 7.3vw;
-    }
-    .button-happyfarm, .button-nikostop, .button-perfumist {
-        font-size: 4.3vw;
-        transform: translate(-1%, 5%);
-    }
+
     section#about {
         margin-top: -19vw;
     }
