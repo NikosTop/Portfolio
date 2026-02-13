@@ -599,8 +599,12 @@ body{
         text-align: center;
     }
 
+    .skillspans {
+        margin-top: 1%;
+    }
+
     .htmlspan, .graphicspan, .wordpressspan, .cssspan, .ecommercespan, .javascriptspan {
-        font-size: 3.7vw;
+        font-size: 2.5vw;
     }
 
     section#about {
@@ -610,6 +614,10 @@ body{
         padding: 2vw;
     }
 
+    .slide-track {
+        gap: 17px;
+    }
+
     .slide {
         min-width: 200px;
         height: 355px;
@@ -617,6 +625,12 @@ body{
 
     .slider-btn {
         display: none;
+    }
+
+    .video-title {
+        font-size: 4.5vw;
+        letter-spacing: 2px;
+        padding-top: 2vw;
     }
 
 }
