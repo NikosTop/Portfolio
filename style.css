@@ -614,10 +614,6 @@ body{
         padding: 2vw;
     }
 
-    .slide-track {
-        gap: 17px;
-    }
-
     .slide {
         min-width: 200px;
         height: 355px;
