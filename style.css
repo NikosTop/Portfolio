@@ -404,7 +404,6 @@ body{
     display: flex;
     gap: 25px;
     transition: transform 0.6s ease;
-    cursor: grab;
 }
 
 .slide-track:active {
@@ -537,6 +536,18 @@ body{
     
 }
 
+@media (min-width: 601px) {
+
+    .slide-track {
+        cursor: grab;
+    }
+
+    .slide-track:active {
+        cursor: grabbing;
+    }
+
+}
+
 @media only screen and (max-width: 600px) {
     .imgnikos {
         background: url(Profile\ Picture\ Mobile.png);
@@ -617,6 +628,10 @@ body{
     .slide {
         min-width: 200px;
         height: 355px;
+    }
+
+    .slide-track {
+        -webkit-overflow-scrolling: touch;
     }
 
     .slider-btn {
