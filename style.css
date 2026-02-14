@@ -487,7 +487,8 @@ body{
 @media only screen and (max-width: 1024px) {
 
     .mainMenu{
-        height: 35vh;
+        border-bottom-right-radius: 32px;
+        height: 43vw;
         position: fixed;
         left: 0px;
         top: 0;
@@ -566,15 +567,24 @@ body{
     }
 
     .name {
-        font-size: 11vw;
+        font-size: 10vw;
         font-weight: normal;
         font-family: 'Josefin Sans', sans-serif;
         letter-spacing: 1px;
         margin-bottom: -3px;
     }
 
+    .mainMenu {
+        /* padding: 0px; */
+        height: 49vw;
+    }
+
+    .closeMenu {
+    font-size: 1.3rem;
+    }
+
     .webdev {
-        font-size: 2.3vw;
+        font-size: 3vw;
         top: 61vw;
         right: 71%;
     }
@@ -592,7 +602,7 @@ body{
     }
 
     .hero-text-right{
-        height:81vw;
+        height:76vw;
     }
 
     .undername {
@@ -603,10 +613,6 @@ body{
         margin-bottom: -23px;
     }
 
-    .mainMenu{
-        padding: 0px;
-    }
-
     .header-main-nav {
         width: 33%;
         font-family: 'Josefin Sans', sans-serif;
@@ -615,6 +621,10 @@ body{
         padding: 0px;
         padding-top: 7px;
         text-align: center;
+    }
+
+    .header-main-logo {
+    width: 12vw;
     }
 
     .skillspans {
@@ -640,6 +650,7 @@ body{
 
     .slide-track {
         -webkit-overflow-scrolling: touch;
+        gap: 15px;
     }
 
     .slider-btn {
@@ -647,7 +658,7 @@ body{
     }
 
     .video-title {
-        font-size: 4.5vw;
+        font-size: 5.5vw;
         letter-spacing: 2px;
         padding-top: 2vw;
     }
@@ -666,7 +677,7 @@ body{
     }
 
     .name {
-        font-size: 13vw;
+        font-size: 10vw;
         font-weight: normal;
         font-family: 'Josefin Sans', sans-serif;
         letter-spacing: 1px;
@@ -674,14 +685,18 @@ body{
     }
 
     .webdev {
-        font-size: 2.3vw;
+        font-size: 2.8vw;
         top: 61vw;
         right: 71%;
     }
 
+    .mainMenu {
+        /* padding: 0px; */
+        height: 67vw;
+    }
 
     .hero-text-right{
-        height:79vw;
+        height:76vw;
     }
 
     .undername {
@@ -689,10 +704,6 @@ body{
         line-height: 109%;
         font-weight: 500;
         margin-bottom: -23px;
-    }
-
-    .mainMenu{
-        padding: 0px;
     }
 
     .header-main-nav {
@@ -703,10 +714,6 @@ body{
         padding: 0px;
         padding-top: 7px;
         text-align: center;
-    }
-
-    .closeMenu{
-        left:-85px;
     }
 
     .mainMenu li a {
