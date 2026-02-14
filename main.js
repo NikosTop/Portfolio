@@ -302,15 +302,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // DRAG FUNCTIONALITY
 
-    track.addEventListener("mousedown", startDrag);
-    track.addEventListener("touchstart", startDrag);
+    const dragLayers = document.querySelectorAll(".drag-layer");
 
-    track.addEventListener("mouseup", endDrag);
-    track.addEventListener("mouseleave", endDrag);
-    track.addEventListener("touchend", endDrag);
+    // START drag on slide
+    dragLayers.forEach(layer => {
+        layer.addEventListener("mousedown", startDrag);
+        layer.addEventListener("touchstart", startDrag);
+    });
 
-    track.addEventListener("mousemove", drag);
-    track.addEventListener("touchmove", drag);
+    // MOVE anywhere on screen
+    document.addEventListener("mousemove", drag);
+    document.addEventListener("touchmove", drag);
+
+    // END anywhere on screen
+    document.addEventListener("mouseup", endDrag);
+    document.addEventListener("touchend", endDrag);
 
     function startDrag(event) {
         stopAuto();
