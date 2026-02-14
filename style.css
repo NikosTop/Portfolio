@@ -557,6 +557,13 @@ body{
 
 }
 
+@media (max-width: 900px) and (orientation: landscape) {
+    .undername {
+        font-size: 14px;
+        line-height: 1.3;
+    }
+}
+
 @media only screen and (max-width: 600px) {
     .imgnikos {
         background: url(Profile\ Picture\ Mobile.png);
@@ -608,7 +615,7 @@ body{
 
     .undername {
         font-family: 'Josefin Sans', sans-serif;
-        font-size: 3vw;
+        font-size: 4vw;
         line-height: 109%;
         font-weight: 500;
         margin-bottom: -23px;
