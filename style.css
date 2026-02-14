@@ -557,13 +557,6 @@ body{
 
 }
 
-@media (max-width: 900px) and (orientation: landscape) {
-    .undername {
-        font-size: 14px;
-        line-height: 1.3;
-    }
-}
-
 @media only screen and (max-width: 600px) {
     .imgnikos {
         background: url(Profile\ Picture\ Mobile.png);
