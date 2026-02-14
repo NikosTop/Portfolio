@@ -10,7 +10,6 @@ body{
     max-width: 100%;
     background-size: 100% auto;
     height: 100vh;
-    height: 100svh;
 }
 
 .hero-container{
@@ -556,6 +555,13 @@ body{
         cursor: grabbing;
     }
 
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+    .undername {
+        font-size: 14px;
+        line-height: 1.3;
+    }
 }
 
 @media only screen and (max-width: 600px) {
