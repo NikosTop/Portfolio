@@ -615,7 +615,7 @@ body{
 
     .undername {
         font-family: 'Josefin Sans', sans-serif;
-        font-size: 4vw;
+        font-size: clamp(13px, 3vw, 17px);
         line-height: 109%;
         font-weight: 500;
         margin-bottom: -23px;
