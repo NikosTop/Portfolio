@@ -100,7 +100,7 @@ body{
 
 .header-main-logo {
     text-align: center;
-    width: 8vw; 
+    width: 6vw; 
     max-width: 200px;
     display: flex;
 }
@@ -488,7 +488,7 @@ body{
 
     .mainMenu{
         border-bottom-right-radius: 32px;
-        height: 43vw;
+        height: 33vw;
         position: fixed;
         left: 0px;
         top: 0;
@@ -509,6 +509,7 @@ body{
         position: absolute;
         top: 20px;
         right: 25px;
+        font-size: 1.3rem;
     }
     
     .openMenu{
