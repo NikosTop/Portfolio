@@ -229,15 +229,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
 document.addEventListener("DOMContentLoaded", function () {
 
-    // ===== TITLE ANIMATION =====
     const title = document.querySelector(".video-title");
-
     setTimeout(() => {
         title.classList.remove("hidden-title");
         title.classList.add("show-title");
     }, 1500);
 
-    // ===== SLIDER CORE =====
     const track = document.querySelector(".slide-track");
     const prevBtn = document.querySelector(".prev");
     const nextBtn = document.querySelector(".next");
@@ -249,18 +246,14 @@ document.addEventListener("DOMContentLoaded", function () {
     let currentTranslate = 0;
     let prevTranslate = 0;
 
-    // ===== CLONE FOR INFINITE LOOP =====
+    // Clone slides
     slides.forEach(slide => {
         const clone = slide.cloneNode(true);
         track.appendChild(clone);
     });
 
-    // Update slides after cloning
     slides = Array.from(track.children);
     const totalSlides = slides.length / 2;
-
-    // Now select ALL iframes (original + clones)
-    const iframes = track.querySelectorAll("iframe");
 
     function setPosition() {
         track.style.transform = `translateX(${currentTranslate}px)`;
@@ -298,72 +291,65 @@ document.addEventListener("DOMContentLoaded", function () {
     track.addEventListener("mouseenter", stopAuto);
     track.addEventListener("mouseleave", startAuto);
 
-    // ===== DRAG SYSTEM (FINAL CLEAN VERSION) =====
+    // ===== DRAG SYSTEM =====
 
     let isDragging = false;
     let startX = 0;
-    let dragDistance = 0;
-    const dragThreshold = 6;
+    let moved = false;
+    const threshold = 8;
 
-    track.addEventListener("mousedown", dragStart);
-    track.addEventListener("touchstart", dragStart, { passive: false });
+    track.addEventListener("pointerdown", pointerDown);
+    track.addEventListener("pointermove", pointerMove);
+    track.addEventListener("pointerup", pointerUp);
+    track.addEventListener("pointercancel", pointerUp);
+    track.addEventListener("pointerleave", pointerUp);
 
-    document.addEventListener("mousemove", dragMove);
-    document.addEventListener("touchmove", dragMove, { passive: false });
-
-    document.addEventListener("mouseup", dragEnd);
-    document.addEventListener("touchend", dragEnd);
-
-    function dragStart(e) {
+    function pointerDown(e) {
         isDragging = true;
-        dragDistance = 0;
-        startX = getPositionX(e);
+        moved = false;
+        startX = e.clientX;
+
+        // disable iframe interaction immediately
+        document.querySelectorAll(".slide iframe").forEach(iframe => {
+            iframe.style.pointerEvents = "none";
+        });
+
         stopAuto();
     }
 
-    function dragMove(e) {
+    function pointerMove(e) {
         if (!isDragging) return;
 
-        const currentX = getPositionX(e);
-        dragDistance = currentX - startX;
+        const diff = e.clientX - startX;
 
-        if (Math.abs(dragDistance) > dragThreshold) {
-
-            // disable iframe interaction only while dragging
-            iframes.forEach(iframe => {
-                iframe.style.pointerEvents = "none";
-            });
-
-            e.preventDefault();
-            currentTranslate = prevTranslate + dragDistance;
+        if (Math.abs(diff) > threshold) {
+            moved = true;
+            currentTranslate = prevTranslate + diff;
             setPosition();
         }
     }
 
-    function dragEnd() {
+    function pointerUp(e) {
         if (!isDragging) return;
 
         isDragging = false;
 
-        if (Math.abs(dragDistance) > 100) {
-            if (dragDistance < 0) nextSlide();
-            else prevSlide();
-        } else {
-            moveToIndex();
+        if (moved) {
+            if (currentTranslate - prevTranslate < -100) nextSlide();
+            else if (currentTranslate - prevTranslate > 100) prevSlide();
+            else moveToIndex();
         }
 
-        // re-enable iframe interaction
-        iframes.forEach(iframe => {
-            iframe.style.pointerEvents = "auto";
-        });
+        prevTranslate = currentTranslate;
+
+        // SMALL DELAY before enabling iframe again
+        setTimeout(() => {
+            document.querySelectorAll(".slide iframe").forEach(iframe => {
+                iframe.style.pointerEvents = "auto";
+            });
+        }, 50);
 
         startAuto();
-    }
-
-    function getPositionX(e) {
-        return e.type.includes("mouse")
-            ? e.pageX
-            : e.touches[0].clientX;
     }
 
     startAuto();
