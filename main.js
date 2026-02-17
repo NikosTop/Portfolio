@@ -300,74 +300,74 @@ document.addEventListener("DOMContentLoaded", function () {
     track.addEventListener("mouseenter", stopAuto);
     track.addEventListener("mouseleave", startAuto);
 
-// DRAG FUNCTIONALITY (Improved – allows video click)
+// DRAG + CLICK SMART HANDLING
 
-let isPointerDown = false;
-let dragStarted = false;
-let dragThreshold = 8; // px before it counts as drag
+const dragLayers = document.querySelectorAll(".drag-layer");
 
-track.addEventListener("mousedown", pointerDown);
-track.addEventListener("touchstart", pointerDown, { passive: true });
+let isDragging = false;
+let startX = 0;
+let moved = false;
+const dragThreshold = 8;
 
-document.addEventListener("mousemove", pointerMove);
-document.addEventListener("touchmove", pointerMove, { passive: false });
+dragLayers.forEach(layer => {
 
-document.addEventListener("mouseup", pointerUp);
-document.addEventListener("touchend", pointerUp);
+    layer.addEventListener("mousedown", startDrag);
+    layer.addEventListener("touchstart", startDrag);
 
-function pointerDown(event) {
+});
+
+document.addEventListener("mousemove", drag);
+document.addEventListener("touchmove", drag);
+
+document.addEventListener("mouseup", endDrag);
+document.addEventListener("touchend", endDrag);
+
+function startDrag(e) {
     stopAuto();
-    isPointerDown = true;
-    dragStarted = false;
-    startX = getPositionX(event);
+    isDragging = true;
+    moved = false;
+    startX = getPositionX(e);
 }
 
-function pointerMove(event) {
-    if (!isPointerDown) return;
+function drag(e) {
+    if (!isDragging) return;
 
-    const currentPosition = getPositionX(event);
-    const diff = currentPosition - startX;
+    const currentX = getPositionX(e);
+    const diff = currentX - startX;
 
-    // Only activate drag after threshold
-    if (!dragStarted && Math.abs(diff) > dragThreshold) {
-        dragStarted = true;
-
-        // Disable iframe interaction ONLY during drag
-        iframes.forEach(iframe => {
-            iframe.style.pointerEvents = "none";
-        });
-    }
-
-    if (dragStarted) {
-        event.preventDefault();
+    if (Math.abs(diff) > dragThreshold) {
+        moved = true;
         currentTranslate = prevTranslate + diff;
         setPosition();
     }
 }
 
-function pointerUp(event) {
-    if (!isPointerDown) return;
+function endDrag(e) {
+    if (!isDragging) return;
 
-    isPointerDown = false;
+    isDragging = false;
 
-    if (dragStarted) {
+    if (moved) {
         const movedBy = currentTranslate - prevTranslate;
 
         if (movedBy < -100) nextSlide();
         else if (movedBy > 100) prevSlide();
         else moveToIndex();
-
-        // Re-enable iframe interaction
-        iframes.forEach(iframe => {
+    } else {
+        // 👇 This forwards click to iframe
+        const iframe = e.target.closest(".slide").querySelector("iframe");
+        if (iframe) {
             iframe.style.pointerEvents = "auto";
-        });
+            iframe.click();
+        }
     }
 
+    prevTranslate = currentTranslate;
     startAuto();
 }
 
 function getPositionX(event) {
     return event.type.includes("mouse")
         ? event.pageX
-        : event.touches[0].clientX;
+        : event.changedTouches[0].clientX;
 }
