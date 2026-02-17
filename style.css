@@ -439,12 +439,6 @@ body{
     position:relative;
 }
 
-.drag-layer {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-}
-
 .slide:hover {
     transform: scale(1.05);
 }
