@@ -300,68 +300,72 @@ document.addEventListener("DOMContentLoaded", function () {
     track.addEventListener("mouseenter", stopAuto);
     track.addEventListener("mouseleave", startAuto);
 
-    // DRAG FUNCTIONALITY
+// ===== CLEAN DRAG SYSTEM (WORKS WITH IFRAME) =====
 
-    const dragLayers = document.querySelectorAll(".drag-layer");
+let isDragging = false;
+let startX = 0;
+let dragDistance = 0;
+const dragThreshold = 6;
 
-    // START drag on slide
-    dragLayers.forEach(layer => {
-        layer.addEventListener("mousedown", startDrag);
-        layer.addEventListener("touchstart", startDrag);
-    });
+track.addEventListener("mousedown", dragStart);
+track.addEventListener("touchstart", dragStart, { passive: true });
 
-    // MOVE anywhere on screen
-    document.addEventListener("mousemove", drag);
-    document.addEventListener("touchmove", drag);
+document.addEventListener("mousemove", dragMove);
+document.addEventListener("touchmove", dragMove, { passive: false });
 
-    // END anywhere on screen
-    document.addEventListener("mouseup", endDrag);
-    document.addEventListener("touchend", endDrag);
+document.addEventListener("mouseup", dragEnd);
+document.addEventListener("touchend", dragEnd);
 
-    function startDrag(event) {
-        stopAuto();
-        isDragging = true;
-        startX = getPositionX(event);
+function dragStart(e) {
+    isDragging = true;
+    dragDistance = 0;
+    startX = getPositionX(e);
+    stopAuto();
+}
 
-        // Disable iframe pointer events while dragging
+function dragMove(e) {
+    if (!isDragging) return;
+
+    const currentX = getPositionX(e);
+    dragDistance = currentX - startX;
+
+    // Only treat as drag if moved enough
+    if (Math.abs(dragDistance) > dragThreshold) {
+
+        // Disable iframe interaction DURING drag
         iframes.forEach(iframe => {
             iframe.style.pointerEvents = "none";
         });
-    }
 
-    function drag(event) {
-        if (!isDragging) return;
-
-        const currentPosition = getPositionX(event);
-        const diff = currentPosition - startX;
-        currentTranslate = prevTranslate + diff;
+        e.preventDefault();
+        currentTranslate = prevTranslate + dragDistance;
         setPosition();
     }
+}
 
-    function endDrag(event) {
-        if (!isDragging) return;
+function dragEnd() {
+    if (!isDragging) return;
 
-        isDragging = false;
-        const movedBy = currentTranslate - prevTranslate;
+    isDragging = false;
 
-        if (movedBy < -100) nextSlide();
-        else if (movedBy > 100) prevSlide();
-        else moveToIndex();
-
-        // Re-enable iframe pointer events
-        iframes.forEach(iframe => {
-            iframe.style.pointerEvents = "auto";
-        });
-
-        startAuto();
+    if (Math.abs(dragDistance) > 100) {
+        if (dragDistance < 0) nextSlide();
+        else prevSlide();
+    } else {
+        moveToIndex();
     }
 
-    function getPositionX(event) {
-        return event.type.includes("mouse")
-            ? event.pageX
-            : event.touches[0].clientX;
-    }
+    // Re-enable iframe interaction
+    iframes.forEach(iframe => {
+        iframe.style.pointerEvents = "auto";
+    });
 
     startAuto();
+}
 
-});
+function getPositionX(e) {
+    return e.type.includes("mouse")
+        ? e.pageX
+        : e.touches[0].clientX;
+}
+}
