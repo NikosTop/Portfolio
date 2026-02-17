@@ -228,57 +228,69 @@ document.addEventListener("DOMContentLoaded", function() {
 // });
 
 document.addEventListener("DOMContentLoaded", function () {
-
-    // ===== TITLE ANIMATION =====
     const title = document.querySelector(".video-title");
 
     setTimeout(() => {
         title.classList.remove("hidden-title");
         title.classList.add("show-title");
     }, 1500);
+});
 
-    // ===== SLIDER CORE =====
+document.addEventListener("DOMContentLoaded", function () {
+
     const track = document.querySelector(".slide-track");
+    const slides = Array.from(track.children);
+    const iframes = track.querySelectorAll("iframe");
     const prevBtn = document.querySelector(".prev");
     const nextBtn = document.querySelector(".next");
 
-    let slides = Array.from(track.children);
     let slideWidth = slides[0].offsetWidth + 25;
     let index = 0;
     let autoScroll;
+    let isDragging = false;
+    let startX;
     let currentTranslate = 0;
+    let prevTranslate = 0;
 
-    // Clone slides for infinite loop
+    // Clone slides for infinite effect
     slides.forEach(slide => {
         const clone = slide.cloneNode(true);
         track.appendChild(clone);
     });
 
-    slides = Array.from(track.children);
-    const totalSlides = slides.length / 2;
+    const totalSlides = track.children.length / 2;
 
-    function updatePosition() {
-        currentTranslate = -index * slideWidth;
+    function setPosition() {
         track.style.transform = `translateX(${currentTranslate}px)`;
+    }
+
+    function moveToIndex() {
+        currentTranslate = -index * slideWidth;
+        prevTranslate = currentTranslate;
+        setPosition();
     }
 
     function nextSlide() {
         index++;
-        if (index >= totalSlides) index = 0;
-        updatePosition();
+        if (index >= totalSlides) {
+            index = 0;
+        }
+        moveToIndex();
     }
 
     function prevSlide() {
         index--;
-        if (index < 0) index = totalSlides - 1;
-        updatePosition();
+        if (index < 0) {
+            index = totalSlides - 1;
+        }
+        moveToIndex();
     }
 
     prevBtn.addEventListener("click", prevSlide);
     nextBtn.addEventListener("click", nextSlide);
 
     function startAuto() {
-        autoScroll = setInterval(nextSlide, 4000);
+        autoScroll = setInterval(nextSlide, 3000);
     }
 
     function stopAuto() {
@@ -288,5 +300,68 @@ document.addEventListener("DOMContentLoaded", function () {
     track.addEventListener("mouseenter", stopAuto);
     track.addEventListener("mouseleave", startAuto);
 
+    // DRAG FUNCTIONALITY
+
+    const dragLayers = document.querySelectorAll(".drag-layer");
+
+    // START drag on slide
+    dragLayers.forEach(layer => {
+        layer.addEventListener("mousedown", startDrag);
+        layer.addEventListener("touchstart", startDrag);
+    });
+
+    // MOVE anywhere on screen
+    document.addEventListener("mousemove", drag);
+    document.addEventListener("touchmove", drag);
+
+    // END anywhere on screen
+    document.addEventListener("mouseup", endDrag);
+    document.addEventListener("touchend", endDrag);
+
+    function startDrag(event) {
+        stopAuto();
+        isDragging = true;
+        startX = getPositionX(event);
+
+        // Disable iframe pointer events while dragging
+        iframes.forEach(iframe => {
+            iframe.style.pointerEvents = "none";
+        });
+    }
+
+    function drag(event) {
+        if (!isDragging) return;
+
+        const currentPosition = getPositionX(event);
+        const diff = currentPosition - startX;
+        currentTranslate = prevTranslate + diff;
+        setPosition();
+    }
+
+    function endDrag(event) {
+        if (!isDragging) return;
+
+        isDragging = false;
+        const movedBy = currentTranslate - prevTranslate;
+
+        if (movedBy < -100) nextSlide();
+        else if (movedBy > 100) prevSlide();
+        else moveToIndex();
+
+        // Re-enable iframe pointer events
+        iframes.forEach(iframe => {
+            iframe.style.pointerEvents = "auto";
+        });
+
+        startAuto();
+    }
+
+    function getPositionX(event) {
+        return event.type.includes("mouse")
+            ? event.pageX
+            : event.touches[0].clientX;
+    }
+
     startAuto();
+
 });
