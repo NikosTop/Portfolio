@@ -297,7 +297,7 @@ body{
 
 .undername{
     font-family: 'Josefin Sans', sans-serif;
-    font-size:clamp(16px,1.1vw,20px);
+    font-size:clamp(14px,1.1vw,20px);
     line-height: 121%;
     font-weight: 500;
     margin-bottom: 35px;
