@@ -297,7 +297,7 @@ body{
 
 .undername{
     font-family: 'Josefin Sans', sans-serif;
-    font-size: clamp(14px,1.3vw,20px);
+    font-size:1.1rem;
     line-height: 121%;
     font-weight: 500;
     margin-bottom: 35px;
@@ -931,4 +931,12 @@ body{
     section#about {
         margin-top: -19vw;
     }
+}
+
+@media (orientation: landscape) and (max-width: 900px){
+
+.undername{
+font-size:0.8rem;
+}
+
 }
