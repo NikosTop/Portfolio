@@ -856,7 +856,15 @@ body{
     }
 
     .services-section {
-    margin-top: 75px;
+    margin-top: 95px;
+    }
+
+    .video-slider-section {
+        margin-top: -4vw;
+    }
+
+    .results-section{
+        margin-top:95px;
     }
 
 }
