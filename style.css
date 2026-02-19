@@ -297,7 +297,7 @@ body{
 
 .undername{
     font-family: 'Josefin Sans', sans-serif;
-    font-size: 1.3vw;
+    font-size: clamp(14px,1.3vw,20px);
     line-height: 121%;
     font-weight: 500;
     margin-bottom: 35px;
@@ -788,10 +788,6 @@ body{
 
     .header-main-logo {
     width: 12vw;
-    }
-
-    .skillspans {
-        margin-top: 1%;
     }
 
     .htmlspan, .graphicspan, .wordpressspan, .cssspan, .ecommercespan, .javascriptspan {
