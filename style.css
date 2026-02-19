@@ -200,7 +200,6 @@ font-size:14px;
 }
 
 .services-title{
-font-size:28px;
 letter-spacing:4px;
 margin-bottom:30px;
 }
@@ -818,8 +817,8 @@ body{
     }
 
     .video-title {
-        font-size: 5.5vw;
-        letter-spacing: 2px;
+        font-size: 7vw;
+        letter-spacing: 4px;
         padding-top: 2vw;
     }
 
@@ -835,7 +834,10 @@ body{
         right: 5px;
     }
 
-    .results-title{font-size:6vw;}
+    .results-title{
+        letter-spacing: 4px;
+        font-size:7vw;
+    }
 
     .stat h2{font-size:7vw;}
 
@@ -854,7 +856,7 @@ body{
     }
 
     .services-section {
-    margin-top: 100px;
+    margin-top: 75px;
     }
 
 }
