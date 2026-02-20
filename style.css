@@ -938,7 +938,7 @@ body{
 @media only screen and (orientation: landscape) and (max-height: 480px) {
 
     .undername{
-     font-size: 0.9vw;
+     font-size: 0.7rem;
     }
 
     .skillspans {
@@ -946,3 +946,4 @@ body{
 
     }
 }
+
