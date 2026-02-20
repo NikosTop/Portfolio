@@ -695,17 +695,6 @@ body{
     
 }
 
-/* @media only screen and (orientation: landscape) and (max-height: 600px){
-
-    .undername{
-    }
-
-    .skillspans {
-        padding-top: 10px;
-
-    }
-} */
-
 @media only screen and (max-device-width: 768px) {
 
     .hero-text-right{
@@ -946,6 +935,14 @@ body{
 
 }
 
+@media only screen and (orientation: landscape) and (max-height: 480px) {
 
+    .undername{
+     font-size: 0.9vw;
+    }
 
+    .skillspans {
+        padding-top: 10px;
 
+    }
+}
