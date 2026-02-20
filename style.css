@@ -696,6 +696,18 @@ body{
         min-width: 250px;
         height: 444px;
     }
+
+    .services-section {
+        margin-top: 103px;
+    }
+
+    .video-slider-section {
+        margin-top: 10vw;
+    }
+
+    .results-section {
+        margin-top: 10vw;
+    }
     
 }
 
@@ -950,6 +962,7 @@ body{
 
     }
 }
+
 
 
 
