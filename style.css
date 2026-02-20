@@ -297,7 +297,7 @@ body{
 
 .undername{
     font-family: 'Josefin Sans', sans-serif;
-    font-size:clamp(14px,1.1vw,20px);
+    font-size:clamp(12px,1.1vw,20px);
     line-height: 121%;
     font-weight: 500;
     margin-bottom: 35px;
@@ -698,7 +698,6 @@ body{
 @media (orientation: landscape) and (max-height: 600px){
 
     .undername{
-    font-size: 15px;
     }
 
     .skillspans {
@@ -944,4 +943,5 @@ body{
     section#about {
         margin-top: -19vw;
     }
+
 }
