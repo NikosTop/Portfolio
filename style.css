@@ -695,10 +695,10 @@ body{
     
 }
 
-@media all (orientation: landscape) and (max-width: 900px){
+@media (orientation: landscape) and (max-width: 900px){
 
     .undername{
-    font-size:0.75rem;
+    font-size: 1.5vw;
     }
 
     .skillspans {
@@ -719,9 +719,9 @@ body{
     
 }
 
-@media all (max-width: 850px) and (min-width: 601px) {
+@media (max-width: 850px) and (min-width: 601px) {
     .undername {
-        font-size: 0.60rem;
+        font-size: 1.5vw;
         padding-top: 12px;
     }
 
