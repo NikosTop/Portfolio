@@ -721,7 +721,7 @@ body{
 
 @media (max-width: 850px) and (min-width: 601px) {
     .undername {
-        font-size: 2vw;
+        font-size: 1.7vw;
         padding-top: 12px;
     }
 
