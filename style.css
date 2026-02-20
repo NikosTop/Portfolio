@@ -695,7 +695,7 @@ body{
     
 }
 
-@media only screen and (orientation: landscape) and (max-height: 600px){
+/* @media only screen and (orientation: landscape) and (max-height: 600px){
 
     .undername{
     }
@@ -704,7 +704,7 @@ body{
         padding-top: 10px;
 
     }
-}
+} */
 
 @media only screen and (max-device-width: 768px) {
 
@@ -725,7 +725,7 @@ body{
     }
 
     .undername {
-        font-size: 11px;
+        font-size: 1.6vw;
         padding-top: 12px;
     }
 
@@ -945,6 +945,7 @@ body{
     }
 
 }
+
 
 
 
