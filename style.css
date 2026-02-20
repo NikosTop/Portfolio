@@ -1,5 +1,4 @@
 html {
-    font-size: 19px;
     -webkit-text-size-adjust: 100%;
 }
 
@@ -943,7 +942,7 @@ body{
 @media only screen and (orientation: landscape) and (max-height: 480px) {
 
     .undername{
-     font-size: 2vw;
+     font-size: 1.5vw;
     }
 
     .skillspans {
@@ -951,6 +950,7 @@ body{
 
     }
 }
+
 
 
 
