@@ -708,7 +708,10 @@ body{
     .results-section {
         margin-top: 10vw;
     }
-    
+
+    .undername {
+        font-size: 1.6vw;
+    }
 }
 
 @media only screen and (max-device-width: 768px) {
@@ -962,6 +965,7 @@ body{
 
     }
 }
+
 
 
 
