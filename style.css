@@ -695,6 +695,18 @@ body{
     
 }
 
+@media all (orientation: landscape) and (max-width: 900px){
+
+    .undername{
+    font-size:0.75rem;
+    }
+
+    .skillspans {
+        padding-top: 10px;
+
+    }
+}
+
 @media only screen and (max-device-width: 768px) {
 
     .hero-text-right{
@@ -705,6 +717,22 @@ body{
         top: 23vw;
     }
     
+}
+
+@media all (max-width: 850px) and (min-width: 601px) {
+    .undername {
+        font-size: 0.60rem;
+        padding-top: 12px;
+    }
+
+    .skillspans {
+    padding-top: 15px;
+    }
+
+    .undername {
+        font-size: 1.5vw;
+    }
+
 }
 
 @media only screen and (max-width: 600px) {
@@ -919,39 +947,4 @@ body{
     section#about {
         margin-top: -19vw;
     }
-}
-
-@media (orientation: landscape) and (max-width: 900px){
-
-.undername{
-font-size:0.75rem;
-}
-
-.skillspans {
-    word-spacing: 9px;
-    padding-top: 10px;
-
-}
-
-@media (max-width:900px){
-.undername{
-font-size:0.75rem;
-}
-}
-}
-
-@media (max-width: 850px) and (min-width: 601px) {
-    .undername {
-        font-size: 0.60rem;
-        padding-top: 12px;
-    }
-
-    .skillspans {
-    padding-top: 15px;
-    }
-
-    .undername {
-        font-size: 1.5vw;
-    }
-
 }
