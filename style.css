@@ -725,7 +725,7 @@ body{
     }
 
     .undername {
-        font-size: 1.1vw;
+        font-size: 14px;
         padding-top: 12px;
     }
 
@@ -945,4 +945,5 @@ body{
     }
 
 }
+
 
