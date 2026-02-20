@@ -695,7 +695,7 @@ body{
     
 }
 
-@media only screen and (orientation: landscape) and (max-width: 900px){
+@media (orientation: landscape) and (max-width: 900px){
 
     .undername{
     font-size: 1.2vw;
@@ -719,7 +719,7 @@ body{
     
 }
 
-@media only screen and (max-width: 850px) and (min-width: 601px) {
+@media (max-width: 850px) and (min-width: 601px) {
     .undername {
         font-size: 2vw;
         padding-top: 12px;
