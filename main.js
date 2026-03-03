@@ -138,93 +138,131 @@ document.addEventListener("DOMContentLoaded", function() {
 
 document.addEventListener("DOMContentLoaded", function () {
 
-    // ===== TITLE ANIMATION =====
-    const title = document.querySelector(".video-title");
-
+  // ===== TITLE ANIMATION =====
+  const title = document.querySelector(".video-title");
+  if (title) {
     setTimeout(() => {
-        title.classList.remove("hidden-title");
-        title.classList.add("show-title");
+      title.classList.remove("hidden-title");
+      title.classList.add("show-title");
     }, 1500);
+  }
 
-    // ===== SLIDER CORE =====
-    const track = document.querySelector(".slide-track");
-    const prevBtn = document.querySelector(".prev");
-    const nextBtn = document.querySelector(".next");
+  // ===== SLIDER CORE =====
+  const track = document.querySelector(".slide-track");
+  const prevBtn = document.querySelector(".prev");
+  const nextBtn = document.querySelector(".next");
+  if (!track) return;
 
-    let slides = Array.from(track.children);
-    let slideWidth = slides[0].offsetWidth + 25;
-    let index = 0;
-    let autoScroll;
-    let currentTranslate = 0;
+  let slides = Array.from(track.children);
+  if (!slides.length) return;
 
-    // Clone slides for infinite loop
-    slides.forEach(slide => {
-        const clone = slide.cloneNode(true);
-        track.appendChild(clone);
-    });
+  let slideWidth = slides[0].offsetWidth + 25;
+  let index = 0;
+  let currentTranslate = 0;
 
-    slides = Array.from(track.children);
-    const totalSlides = slides.length / 2;
+  // Clone slides for infinite loop (do it once)
+  slides.forEach(slide => {
+    const clone = slide.cloneNode(true);
+    track.appendChild(clone);
+  });
 
-    function updatePosition() {
-        currentTranslate = -index * slideWidth;
-        track.style.transform = `translateX(${currentTranslate}px)`;
-    }
+  slides = Array.from(track.children);
+  const totalSlides = slides.length / 2;
 
-    function nextSlide() {
-        index++;
-        if (index >= totalSlides) index = 0;
-        updatePosition();
-    }
-
-    function prevSlide() {
-        index--;
-        if (index < 0) index = totalSlides - 1;
-        updatePosition();
-    }
-
-    prevBtn.addEventListener("click", prevSlide);
-    nextBtn.addEventListener("click", nextSlide);
-
-    let rafId = null;
-let isPaused = false;
-
-// speed in pixels per frame-ish (we'll use time-based)
-const SPEED = 28; // px per second (try 18–40)
-
-function loop(t) {
-  if (!loop.last) loop.last = t;
-  const dt = (t - loop.last) / 1000; // seconds
-  loop.last = t;
-
-  if (!isPaused) {
-    currentTranslate -= SPEED * dt;
-
-    // when we've moved one full "set" of slides, wrap smoothly
-    const loopWidth = totalSlides * slideWidth; // width of original set
-    if (-currentTranslate >= loopWidth) {
-      currentTranslate += loopWidth; // wrap back
-    }
-    if (currentTranslate > 0) {
-      currentTranslate -= loopWidth;
-    }
-
+  function updatePosition() {
+    currentTranslate = -index * slideWidth;
     track.style.transform = `translateX(${currentTranslate}px)`;
   }
 
-  rafId = requestAnimationFrame(loop);
-}
+  function nextSlide() {
+    index++;
+    if (index >= totalSlides) index = 0;
+    updatePosition();
+  }
 
-function startContinuous() {
-  if (rafId) cancelAnimationFrame(rafId);
-  loop.last = 0;
-  rafId = requestAnimationFrame(loop);
-}
+  function prevSlide() {
+    index--;
+    if (index < 0) index = totalSlides - 1;
+    updatePosition();
+  }
 
-track.addEventListener("mouseenter", () => { isPaused = true; });
-track.addEventListener("mouseleave", () => { isPaused = false; });
+  if (prevBtn) prevBtn.addEventListener("click", prevSlide);
+  if (nextBtn) nextBtn.addEventListener("click", nextSlide);
 
-startContinuous();
-    
+  // Keep sizing correct on resize
+  window.addEventListener("resize", () => {
+    // recalc width (in case responsive)
+    const first = track.children[0];
+    if (!first) return;
+
+    slideWidth = first.offsetWidth + 25;
+
+    // keep index consistent with current position
+    index = Math.round(Math.abs(currentTranslate) / slideWidth) % totalSlides;
+    updatePosition();
+  }, { passive: true });
+
+  // ===== Continuous auto-move (never reverses), pause on hover/touch, no catch-up =====
+  let rafId = null;
+  let isPaused = false;
+
+  const SPEED = 70;     // px per second (adjust)
+  const MAX_DT = 0.05;  // seconds (prevents speed jump after tab inactive)
+
+  function loop(t) {
+    if (!loop.last) loop.last = t;
+
+    let dt = (t - loop.last) / 1000;
+    if (dt > MAX_DT) dt = MAX_DT; // no catch-up
+    loop.last = t;
+
+    if (!isPaused) {
+      const loopWidth = totalSlides * slideWidth;
+
+      currentTranslate -= SPEED * dt;
+
+      // keep translate always in [-loopWidth, 0)
+      currentTranslate = -(((-currentTranslate) % loopWidth + loopWidth) % loopWidth);
+
+      track.style.transform = `translateX(${currentTranslate}px)`;
+    }
+
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function startContinuous() {
+    if (rafId) cancelAnimationFrame(rafId);
+    loop.last = 0;
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function pause() { isPaused = true; }
+  function resume() { isPaused = false; }
+
+  // Desktop hover
+  track.addEventListener("mouseenter", pause);
+  track.addEventListener("mouseleave", resume);
+
+  // Mobile / touch interactions (tap video)
+  track.addEventListener("pointerdown", pause, { passive: true });
+  track.addEventListener("pointerup", resume, { passive: true });
+  track.addEventListener("pointercancel", resume, { passive: true });
+  track.addEventListener("touchstart", pause, { passive: true });
+  track.addEventListener("touchend", resume, { passive: true });
+  track.addEventListener("touchcancel", resume, { passive: true });
+
+  // If iframe steals focus, pause; resume on focus back
+  window.addEventListener("blur", pause);
+  window.addEventListener("focus", () => { loop.last = 0; resume(); });
+
+  // Tab switching: pause + reset time so no speed burst
+  document.addEventListener("visibilitychange", () => {
+    loop.last = 0;
+    if (document.hidden) pause();
+    else resume();
+  });
+
+  startContinuous();
 });
+
 
