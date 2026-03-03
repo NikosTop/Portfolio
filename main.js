@@ -186,16 +186,45 @@ document.addEventListener("DOMContentLoaded", function () {
     prevBtn.addEventListener("click", prevSlide);
     nextBtn.addEventListener("click", nextSlide);
 
-    function startAuto() {
-        autoScroll = setInterval(nextSlide, 4000);
+    let rafId = null;
+let isPaused = false;
+
+// speed in pixels per frame-ish (we'll use time-based)
+const SPEED = 28; // px per second (try 18–40)
+
+function loop(t) {
+  if (!loop.last) loop.last = t;
+  const dt = (t - loop.last) / 1000; // seconds
+  loop.last = t;
+
+  if (!isPaused) {
+    currentTranslate -= SPEED * dt;
+
+    // when we've moved one full "set" of slides, wrap smoothly
+    const loopWidth = totalSlides * slideWidth; // width of original set
+    if (-currentTranslate >= loopWidth) {
+      currentTranslate += loopWidth; // wrap back
+    }
+    if (currentTranslate > 0) {
+      currentTranslate -= loopWidth;
     }
 
-    function stopAuto() {
-        clearInterval(autoScroll);
-    }
+    track.style.transform = `translateX(${currentTranslate}px)`;
+  }
 
-    track.addEventListener("mouseenter", stopAuto);
-    track.addEventListener("mouseleave", startAuto);
+  rafId = requestAnimationFrame(loop);
+}
 
-    startAuto();
+function startContinuous() {
+  if (rafId) cancelAnimationFrame(rafId);
+  loop.last = 0;
+  rafId = requestAnimationFrame(loop);
+}
+
+track.addEventListener("mouseenter", () => { isPaused = true; });
+track.addEventListener("mouseleave", () => { isPaused = false; });
+
+startContinuous();
+    
 });
+
