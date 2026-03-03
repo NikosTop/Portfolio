@@ -146,155 +146,125 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 1500);
   }
 
-  // ===== SLIDER CORE =====
+  const slider = document.querySelector(".slider");
   const track = document.querySelector(".slide-track");
-  const prevBtn = document.querySelector(".prev");
-  const nextBtn = document.querySelector(".next");
-  if (!track) return;
-
-  // make sure wrapping never animates backwards
-  track.style.transition = "none";
+  if (!track || !slider) return;
 
   const isMobile = window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
 
-  let originals = Array.from(track.children);
-  if (!originals.length) return;
+  // IMPORTANT: no transitions for continuous move
+  track.style.transition = "none";
 
-  // clone ONCE
+  // Build a loop by cloning once so there are enough slides
+  // (with 8 videos, duplicating once is plenty)
+  const originals = Array.from(track.children);
+  if (!originals.length) return;
   originals.forEach(slide => track.appendChild(slide.cloneNode(true)));
 
-  const totalSlides = originals.length;
-
-  // measurements (REAL gap from CSS)
-  let slideWidth = 0;
-  let gap = 0;
-  let loopWidth = 0;
-
-  function measure() {
+  // Measure one "step" (slide width + CSS gap)
+  let step = 0;
+  function measureStep() {
     const first = track.children[0];
     if (!first) return;
 
-    const rect = first.getBoundingClientRect();
-    slideWidth = rect.width;
-
-    const cs = getComputedStyle(track);
-    // gap can be "25px" or "15px" depending on media query
-    gap = parseFloat(cs.gap || cs.columnGap || "0") || 0;
-
-    loopWidth = totalSlides * (slideWidth + gap);
+    const slideW = first.getBoundingClientRect().width;
+    const gap = parseFloat(getComputedStyle(track).gap || getComputedStyle(track).columnGap || "0") || 0;
+    step = slideW + gap;
   }
+  measureStep();
+  window.addEventListener("resize", measureStep, { passive: true });
 
   // Continuous state
-  let currentTranslate = 0;
+  let x = 0;
   let rafId = null;
   let paused = false;
 
-  // Mobile “lock pause until page scroll”
-  let mobileLockPaused = false;
+  // Mobile: lock pause after tap (resume only when page scrolls)
+  let mobileLocked = false;
 
-  const SPEED = 70;     // px/sec
-  const MAX_DT = 0.05;  // prevents “speed burst” after tab switch
+  const SPEED = 70;    // px/sec
+  const MAX_DT = 0.05;
 
-  function applyTransform(x) {
-    // snap to whole pixels to avoid micro-mismatch blink
-    const px = Math.round(x);
-    track.style.transform = `translate3d(${px}px, 0, 0)`;
+  function setX(v) {
+    x = v;
+    // rounding removes tiny shimmer
+    track.style.transform = `translate3d(${Math.round(x)}px,0,0)`;
   }
 
-  function wrap() {
-    // keep x in [-loopWidth, 0)
-    currentTranslate = -(((-currentTranslate) % loopWidth + loopWidth) % loopWidth);
-  }
-
-  function loop(t) {
-    if (!loop.last) loop.last = t;
-
-    let dt = (t - loop.last) / 1000;
+  function tick(t) {
+    if (!tick.last) tick.last = t;
+    let dt = (t - tick.last) / 1000;
     if (dt > MAX_DT) dt = MAX_DT;
-    loop.last = t;
+    tick.last = t;
 
-    if (!paused) {
-      currentTranslate -= SPEED * dt;
-      wrap();
-      applyTransform(currentTranslate);
+    if (!paused && step > 0) {
+      setX(x - SPEED * dt);
+
+      // ✅ NO TELEPORT WRAP:
+      // when we've moved left by at least one step,
+      // move the first slide to the end and compensate x by +step
+      while (-x >= step) {
+        track.appendChild(track.firstElementChild);
+        setX(x + step);
+      }
     }
 
-    rafId = requestAnimationFrame(loop);
+    rafId = requestAnimationFrame(tick);
   }
 
   function start() {
     if (rafId) cancelAnimationFrame(rafId);
-    loop.last = 0;
-    rafId = requestAnimationFrame(loop);
+    tick.last = 0;
+    rafId = requestAnimationFrame(tick);
   }
 
   function pause(lockOnMobile = false) {
     paused = true;
-    if (isMobile && lockOnMobile) mobileLockPaused = true;
+    if (isMobile && lockOnMobile) mobileLocked = true;
   }
 
   function resume() {
-    if (isMobile && mobileLockPaused) return;
+    if (isMobile && mobileLocked) return;
     paused = false;
   }
 
-  // Desktop: pause only on hover
-  track.addEventListener("mouseenter", () => { if (!isMobile) pause(false); });
-  track.addEventListener("mouseleave", () => { if (!isMobile) resume(); });
+  // Desktop: pause on hover
+  slider.addEventListener("mouseenter", () => { if (!isMobile) pause(false); });
+  slider.addEventListener("mouseleave", () => { if (!isMobile) resume(); });
 
-  // Mobile: pause+LOCK when user taps slider/video (capture helps with iframe)
+  // ✅ Mobile: pause when user taps the slider area (including iframes)
+  // Use CAPTURE so it fires before the iframe eats it.
   if (isMobile) {
-    // capture=true to fire before iframe eats the touch
-    track.addEventListener("touchstart", () => pause(true), { passive: true, capture: true });
-    track.addEventListener("pointerdown", () => pause(true), { passive: true, capture: true });
+    slider.addEventListener("touchstart", () => pause(true), { passive: true, capture: true });
+    slider.addEventListener("pointerdown", () => pause(true), { passive: true, capture: true });
 
-    // Resume ONLY when the page scrolls (portrait + landscape)
+    // Resume ONLY when page scrolls (or touchmove scroll)
     let lastY = window.scrollY;
-    const unlockIfScrolled = () => {
+    const unlockOnScroll = () => {
       const y = window.scrollY;
-      if (y !== lastY && mobileLockPaused) {
-        mobileLockPaused = false;
+      if (y !== lastY && mobileLocked) {
+        mobileLocked = false;
         paused = false;
       }
       lastY = y;
     };
-
-    window.addEventListener("scroll", unlockIfScrolled, { passive: true });
-    window.addEventListener("touchmove", unlockIfScrolled, { passive: true });
+    window.addEventListener("scroll", unlockOnScroll, { passive: true });
+    window.addEventListener("touchmove", unlockOnScroll, { passive: true });
   }
 
-  // Tab switching: no catch-up
+  // Avoid speed burst after tab switch
   document.addEventListener("visibilitychange", () => {
-    loop.last = 0;
+    tick.last = 0;
     if (document.hidden) paused = true;
-    else if (!(isMobile && mobileLockPaused)) paused = false;
+    else if (!(isMobile && mobileLocked)) paused = false;
   });
+  window.addEventListener("focus", () => { tick.last = 0; });
 
-  window.addEventListener("focus", () => { loop.last = 0; });
-
-  // Buttons: nudge by 1 slide (no easing, but stable)
-  function nudge(dir) {
-    // dir: -1 = next (left), +1 = prev (right)
-    currentTranslate += dir * (slideWidth + gap);
-    wrap();
-    applyTransform(currentTranslate);
-  }
-
-  if (nextBtn) nextBtn.addEventListener("click", () => nudge(-1));
-  if (prevBtn) prevBtn.addEventListener("click", () => nudge(+1));
-
-  // init
-  measure();
-  wrap();
-  applyTransform(currentTranslate);
+  // Start
+  setX(0);
   start();
-
-  window.addEventListener("resize", () => {
-    measure();
-    wrap();
-    applyTransform(currentTranslate);
-  }, { passive: true });
 });
+
 
 
 
