@@ -155,7 +155,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const isMobile = window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
 
-  // Prevent reverse/jump animation during infinite loop
+  // Prevent reverse/jump animation during loop
   track.style.transition = "none";
 
   // Clone once for infinite feel
@@ -165,7 +165,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Measures (slide width + CSS gap)
   let step = 0;
-
   function measureStep() {
     const first = track.children[0];
     if (!first) return;
@@ -182,7 +181,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let rafId = null;
   let paused = false;
 
-  // Mobile: lock pause after video starts (resume ONLY on page scroll)
+  // Mobile: lock pause after any video interaction (resume ONLY on page scroll)
   let mobileLocked = false;
 
   const SPEED = 70;    // px/sec
@@ -256,45 +255,44 @@ document.addEventListener("DOMContentLoaded", function () {
   });
   window.addEventListener("focus", () => { tick.last = 0; });
 
-  // Buttons (smooth nudge)
-  function animateTo(targetX, onDone) {
-    track.style.transition = "transform 220ms ease";
-    setX(targetX);
-
-    const finish = () => {
-      track.style.transition = "none";
-      track.removeEventListener("transitionend", finish);
-      if (onDone) onDone();
-    };
-    track.addEventListener("transitionend", finish);
-  }
-
+  // ===== Buttons (like at the start: instant one-step jump) =====
   function next() {
     if (!step) return;
+
+    // move left by one step instantly
     pause(false);
-    animateTo(x - step, () => {
-      track.appendChild(track.firstElementChild);
-      setX(x + step);
-      if (!(isMobile && mobileLocked)) resume();
-    });
+    track.style.transition = "none";
+
+    setX(x - step);
+
+    // normalize DOM so the conveyor loop stays stable
+    track.appendChild(track.firstElementChild);
+    setX(x + step);
+
+    // resume (unless mobile is locked)
+    if (!(isMobile && mobileLocked)) resume();
   }
 
   function prev() {
     if (!step) return;
+
     pause(false);
+    track.style.transition = "none";
+
+    // bring last to front and compensate so it looks like moving right by one
     track.insertBefore(track.lastElementChild, track.firstElementChild);
-    setX(x - step); // compensate
-    requestAnimationFrame(() => {
-      animateTo(x, () => {
-        if (!(isMobile && mobileLocked)) resume();
-      });
-    });
+    setX(x - step); // compensate to keep current visual position
+
+    // then jump back to original x (instant)
+    setX(x);
+
+    if (!(isMobile && mobileLocked)) resume();
   }
 
   if (nextBtn) nextBtn.addEventListener("click", next);
   if (prevBtn) prevBtn.addEventListener("click", prev);
 
-  // ===== ✅ YouTube API: pause when video starts playing (reliable) =====
+  // ===== ✅ YouTube API: pause on PLAYING OR PAUSED (mobile requirement) =====
   function hookYouTubePause() {
     if (!window.YT || !YT.Player) return;
 
@@ -306,8 +304,10 @@ document.addEventListener("DOMContentLoaded", function () {
       new YT.Player(iframe, {
         events: {
           onStateChange: (e) => {
-            if (e.data === YT.PlayerState.PLAYING) {
-              pause(true); // pause + lock on mobile
+            // PLAYING = 1, PAUSED = 2
+            if (e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.PAUSED) {
+              // lock pause on mobile; on desktop just pause (optional)
+              pause(true);
             }
           }
         }
@@ -332,5 +332,6 @@ document.addEventListener("DOMContentLoaded", function () {
   setX(0);
   start();
 });
+
 
 
