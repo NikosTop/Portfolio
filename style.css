@@ -579,10 +579,6 @@ body{
   touch-action: pan-y;
 }
 
-.slide-track:active {
-    cursor: grabbing;
-}
-
 .video-title {
     font-family: 'Josefin Sans', sans-serif;
     font-size: 3vw;
@@ -969,6 +965,7 @@ body{
 
     }
 }
+
 
 
 
