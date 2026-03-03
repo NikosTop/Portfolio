@@ -966,12 +966,11 @@ body{
     }
 }
 
-
-
-
-
-
-
-
+@media (hover: none) and (pointer: coarse){
+  .slider-btn{
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
 
 
