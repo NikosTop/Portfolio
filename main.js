@@ -255,38 +255,39 @@ document.addEventListener("DOMContentLoaded", function () {
   });
   window.addEventListener("focus", () => { tick.last = 0; });
 
-  // ===== Buttons (like at the start: instant one-step jump) =====
+  // ===== ✅ Buttons (fixed prev + unlock on mobile) =====
+  function unlockAndRun() {
+    // If slider was locked because of video interaction on mobile,
+    // button click should unlock and start sliding again.
+    if (isMobile) mobileLocked = false;
+    paused = false;
+    tick.last = 0; // avoid weird dt jump
+  }
+
   function next() {
     if (!step) return;
 
-    // move left by one step instantly
-    pause(false);
+    unlockAndRun();
     track.style.transition = "none";
 
-    setX(x - step);
-
-    // normalize DOM so the conveyor loop stays stable
+    // Jump 1 slide forward (left): rotate DOM once
     track.appendChild(track.firstElementChild);
-    setX(x + step);
 
-    // resume (unless mobile is locked)
-    if (!(isMobile && mobileLocked)) resume();
+    // Keep translate stable
+    setX(x);
   }
 
   function prev() {
     if (!step) return;
 
-    pause(false);
+    unlockAndRun();
     track.style.transition = "none";
 
-    // bring last to front and compensate so it looks like moving right by one
+    // Jump 1 slide back (right): rotate DOM backwards once
     track.insertBefore(track.lastElementChild, track.firstElementChild);
-    setX(x - step); // compensate to keep current visual position
 
-    // then jump back to original x (instant)
+    // Keep translate stable
     setX(x);
-
-    if (!(isMobile && mobileLocked)) resume();
   }
 
   if (nextBtn) nextBtn.addEventListener("click", next);
@@ -304,9 +305,7 @@ document.addEventListener("DOMContentLoaded", function () {
       new YT.Player(iframe, {
         events: {
           onStateChange: (e) => {
-            // PLAYING = 1, PAUSED = 2
             if (e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.PAUSED) {
-              // lock pause on mobile; on desktop just pause (optional)
               pause(true);
             }
           }
