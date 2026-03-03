@@ -151,13 +151,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const track = document.querySelector(".slide-track");
   const prevBtn = document.querySelector(".prev");
   const nextBtn = document.querySelector(".next");
-
   if (!slider || !track) return;
 
-  // Mobile detection
   const isMobile = window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
 
-  // No transition for continuous mode (prevents reverse/jump animation)
+  // Prevent reverse/jump animation during infinite loop
   track.style.transition = "none";
 
   // Clone once for infinite feel
@@ -165,16 +163,8 @@ document.addEventListener("DOMContentLoaded", function () {
   if (!originals.length) return;
   originals.forEach(s => track.appendChild(s.cloneNode(true)));
 
-  let step = 0;      // slide width + gap
-  let x = 0;         // current translateX
-  let rafId = null;
-  let paused = false;
-
-  // Mobile: lock pause after tap (resume ONLY when page scrolls)
-  let mobileLocked = false;
-
-  const SPEED = 70;    // px/sec
-  const MAX_DT = 0.05;
+  // Measures (slide width + CSS gap)
+  let step = 0;
 
   function measureStep() {
     const first = track.children[0];
@@ -187,12 +177,23 @@ document.addEventListener("DOMContentLoaded", function () {
     step = w + gap;
   }
 
+  // Continuous state
+  let x = 0;
+  let rafId = null;
+  let paused = false;
+
+  // Mobile: lock pause after video starts (resume ONLY on page scroll)
+  let mobileLocked = false;
+
+  const SPEED = 70;    // px/sec
+  const MAX_DT = 0.05;
+
   function setX(v) {
     x = v;
     track.style.transform = `translate3d(${Math.round(x)}px,0,0)`;
   }
 
-  // Conveyor-belt loop: move first slide to end when it leaves view
+  // Conveyor-belt loop (no teleport wrap => no blink)
   function tick(t) {
     if (!tick.last) tick.last = t;
 
@@ -224,21 +225,16 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function resume() {
-    if (isMobile && mobileLocked) return;
+    if (isMobile && mobileLocked) return; // only scroll unlocks on mobile
     paused = false;
   }
 
-  // Desktop: pause only on hover
+  // Desktop: pause on hover
   slider.addEventListener("mouseenter", () => { if (!isMobile) pause(false); });
   slider.addEventListener("mouseleave", () => { if (!isMobile) resume(); });
 
-  // ✅ Mobile: pause when user taps (including tapping the iframe area)
-  // Use CAPTURE on the .slider wrapper to catch it as early as possible.
+  // Mobile: resume ONLY on page scroll (your requirement)
   if (isMobile) {
-    slider.addEventListener("touchstart", () => pause(true), { passive: true, capture: true });
-    slider.addEventListener("pointerdown", () => pause(true), { passive: true, capture: true });
-
-    // Resume ONLY when the page scrolls
     let lastY = window.scrollY;
     const unlockOnScroll = () => {
       const y = window.scrollY;
@@ -252,7 +248,7 @@ document.addEventListener("DOMContentLoaded", function () {
     window.addEventListener("touchmove", unlockOnScroll, { passive: true });
   }
 
-  // No speed burst after tab switch
+  // No speed burst after tab switching
   document.addEventListener("visibilitychange", () => {
     tick.last = 0;
     if (document.hidden) paused = true;
@@ -260,9 +256,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
   window.addEventListener("focus", () => { tick.last = 0; });
 
-  // ===== Buttons (work again) =====
-  // We animate a small nudge (±step). After animation completes, we “normalize” the DOM
-  // so it stays infinite without blink.
+  // Buttons (smooth nudge)
   function animateTo(targetX, onDone) {
     track.style.transition = "transform 220ms ease";
     setX(targetX);
@@ -276,22 +270,20 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function next() {
-    // move left by one step
+    if (!step) return;
     pause(false);
     animateTo(x - step, () => {
-      // after moving left one step, rotate DOM once to keep x small
       track.appendChild(track.firstElementChild);
-      setX(x + step); // compensate
+      setX(x + step);
       if (!(isMobile && mobileLocked)) resume();
     });
   }
 
   function prev() {
-    // move right by one step: bring last to front then animate
+    if (!step) return;
     pause(false);
     track.insertBefore(track.lastElementChild, track.firstElementChild);
-    setX(x - step); // compensate so view doesn't jump
-    // now animate right to original x
+    setX(x - step); // compensate
     requestAnimationFrame(() => {
       animateTo(x, () => {
         if (!(isMobile && mobileLocked)) resume();
@@ -302,13 +294,43 @@ document.addEventListener("DOMContentLoaded", function () {
   if (nextBtn) nextBtn.addEventListener("click", next);
   if (prevBtn) prevBtn.addEventListener("click", prev);
 
+  // ===== ✅ YouTube API: pause when video starts playing (reliable) =====
+  function hookYouTubePause() {
+    if (!window.YT || !YT.Player) return;
+
+    const iframes = track.querySelectorAll("iframe");
+    iframes.forEach((iframe) => {
+      if (iframe._ytBound) return;
+      iframe._ytBound = true;
+
+      new YT.Player(iframe, {
+        events: {
+          onStateChange: (e) => {
+            if (e.data === YT.PlayerState.PLAYING) {
+              pause(true); // pause + lock on mobile
+            }
+          }
+        }
+      });
+    });
+  }
+
+  if (window.YT && YT.Player) {
+    hookYouTubePause();
+  } else {
+    const prevReady = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = function () {
+      if (typeof prevReady === "function") prevReady();
+      hookYouTubePause();
+    };
+  }
+
   // init
   measureStep();
-  window.addEventListener("resize", () => {
-    measureStep();
-  }, { passive: true });
+  window.addEventListener("resize", measureStep, { passive: true });
 
   setX(0);
   start();
 });
+
 
