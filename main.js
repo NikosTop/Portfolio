@@ -152,54 +152,59 @@ document.addEventListener("DOMContentLoaded", function () {
   const nextBtn = document.querySelector(".next");
   if (!track) return;
 
-  // Detect mobile-ish (coarse pointer / no hover)
-  const isMobile = window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
-
-  let slides = Array.from(track.children);
-  if (!slides.length) return;
-
-  // Ensure NO transform transitions (prevents “reverse” on wrap)
+  // make sure wrapping never animates backwards
   track.style.transition = "none";
 
-  let slideWidth = slides[0].offsetWidth + 25; // keep your spacing
-  const baseCount = slides.length;
+  const isMobile = window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
 
-  // Clone slides ONCE for seamless loop
-  for (let i = 0; i < baseCount; i++) {
-    track.appendChild(slides[i].cloneNode(true));
+  let originals = Array.from(track.children);
+  if (!originals.length) return;
+
+  // clone ONCE
+  originals.forEach(slide => track.appendChild(slide.cloneNode(true)));
+
+  const totalSlides = originals.length;
+
+  // measurements (REAL gap from CSS)
+  let slideWidth = 0;
+  let gap = 0;
+  let loopWidth = 0;
+
+  function measure() {
+    const first = track.children[0];
+    if (!first) return;
+
+    const rect = first.getBoundingClientRect();
+    slideWidth = rect.width;
+
+    const cs = getComputedStyle(track);
+    // gap can be "25px" or "15px" depending on media query
+    gap = parseFloat(cs.gap || cs.columnGap || "0") || 0;
+
+    loopWidth = totalSlides * (slideWidth + gap);
   }
-
-  // Recompute
-  slides = Array.from(track.children);
-  const totalSlides = baseCount; // original set count
-  let loopWidth = totalSlides * slideWidth;
 
   // Continuous state
   let currentTranslate = 0;
   let rafId = null;
-
-  // Pause logic
   let paused = false;
 
-  // Mobile: when user taps video/slider, lock paused until PAGE scroll happens
+  // Mobile “lock pause until page scroll”
   let mobileLockPaused = false;
 
-  const SPEED = 70;      // px/sec
-  const MAX_DT = 0.05;   // prevents “speed burst” after tab inactive
+  const SPEED = 70;     // px/sec
+  const MAX_DT = 0.05;  // prevents “speed burst” after tab switch
 
-  function recalc() {
-    // Recalc width responsively
-    const first = track.children[0];
-    if (!first) return;
-
-    slideWidth = first.offsetWidth + 25;
-    loopWidth = totalSlides * slideWidth;
-
-    // Keep translate in range
-    currentTranslate = -(((-currentTranslate) % loopWidth + loopWidth) % loopWidth);
-    track.style.transform = `translateX(${currentTranslate}px)`;
+  function applyTransform(x) {
+    // snap to whole pixels to avoid micro-mismatch blink
+    const px = Math.round(x);
+    track.style.transform = `translate3d(${px}px, 0, 0)`;
   }
-  window.addEventListener("resize", recalc, { passive: true });
+
+  function wrap() {
+    // keep x in [-loopWidth, 0)
+    currentTranslate = -(((-currentTranslate) % loopWidth + loopWidth) % loopWidth);
+  }
 
   function loop(t) {
     if (!loop.last) loop.last = t;
@@ -210,12 +215,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!paused) {
       currentTranslate -= SPEED * dt;
-
-      // ✅ Seamless wrap, ALWAYS moving left, NEVER reversing.
-      // keep translate always in [-loopWidth, 0)
-      currentTranslate = -(((-currentTranslate) % loopWidth + loopWidth) % loopWidth);
-
-      track.style.transform = `translateX(${currentTranslate}px)`;
+      wrap();
+      applyTransform(currentTranslate);
     }
 
     rafId = requestAnimationFrame(loop);
@@ -227,84 +228,73 @@ document.addEventListener("DOMContentLoaded", function () {
     rafId = requestAnimationFrame(loop);
   }
 
-  function pauseContinuous(lockOnMobile = false) {
+  function pause(lockOnMobile = false) {
     paused = true;
     if (isMobile && lockOnMobile) mobileLockPaused = true;
   }
 
-  function resumeContinuous() {
-    // On mobile, only resume if not locked
+  function resume() {
     if (isMobile && mobileLockPaused) return;
     paused = false;
   }
 
-  // Desktop behavior: pause on hover only
-  track.addEventListener("mouseenter", () => {
-    if (!isMobile) pauseContinuous(false);
-  });
-  track.addEventListener("mouseleave", () => {
-    if (!isMobile) resumeContinuous();
-  });
+  // Desktop: pause only on hover
+  track.addEventListener("mouseenter", () => { if (!isMobile) pause(false); });
+  track.addEventListener("mouseleave", () => { if (!isMobile) resume(); });
 
-  // Mobile behavior:
-  // - Any tap inside the slider (including on iframe/video) => pause and LOCK
-  // - It will resume ONLY when the user scrolls the PAGE
+  // Mobile: pause+LOCK when user taps slider/video (capture helps with iframe)
   if (isMobile) {
-    track.addEventListener("touchstart", () => pauseContinuous(true), { passive: true });
-    track.addEventListener("pointerdown", () => pauseContinuous(true), { passive: true });
+    // capture=true to fire before iframe eats the touch
+    track.addEventListener("touchstart", () => pause(true), { passive: true, capture: true });
+    track.addEventListener("pointerdown", () => pause(true), { passive: true, capture: true });
 
-    // ✅ Resume ONLY on page scroll (mobile)
-    let scrollResumeTimer = null;
-    window.addEventListener(
-      "scroll",
-      () => {
-        if (!mobileLockPaused) return;
+    // Resume ONLY when the page scrolls (portrait + landscape)
+    let lastY = window.scrollY;
+    const unlockIfScrolled = () => {
+      const y = window.scrollY;
+      if (y !== lastY && mobileLockPaused) {
+        mobileLockPaused = false;
+        paused = false;
+      }
+      lastY = y;
+    };
 
-        // small debounce so it doesn't flicker
-        clearTimeout(scrollResumeTimer);
-        scrollResumeTimer = setTimeout(() => {
-          mobileLockPaused = false;
-          paused = false;
-        }, 120);
-      },
-      { passive: true }
-    );
+    window.addEventListener("scroll", unlockIfScrolled, { passive: true });
+    window.addEventListener("touchmove", unlockIfScrolled, { passive: true });
   }
 
-  // Tab switching: pause + reset time so no speed burst
+  // Tab switching: no catch-up
   document.addEventListener("visibilitychange", () => {
     loop.last = 0;
     if (document.hidden) paused = true;
-    else {
-      // keep mobile lock behavior
-      if (!(isMobile && mobileLockPaused)) paused = false;
-    }
+    else if (!(isMobile && mobileLockPaused)) paused = false;
   });
 
-  window.addEventListener("focus", () => {
-    loop.last = 0;
-  });
+  window.addEventListener("focus", () => { loop.last = 0; });
 
-  // Buttons should work without fighting the continuous translate:
-  // We’ll “nudge” translate by one slide (still no transition)
+  // Buttons: nudge by 1 slide (no easing, but stable)
   function nudge(dir) {
-    pauseContinuous(false); // optional: momentarily pause while clicking
-    currentTranslate += dir * slideWidth; // dir = +1 (right), -1 (left) in translate space
-    currentTranslate = -(((-currentTranslate) % loopWidth + loopWidth) % loopWidth);
-    track.style.transform = `translateX(${currentTranslate}px)`;
-
-    // If on mobile and it was locked by video tap, keep it locked.
-    // Otherwise resume after a short moment.
-    if (!(isMobile && mobileLockPaused)) {
-      setTimeout(() => (paused = false), 80);
-    }
+    // dir: -1 = next (left), +1 = prev (right)
+    currentTranslate += dir * (slideWidth + gap);
+    wrap();
+    applyTransform(currentTranslate);
   }
 
-  if (nextBtn) nextBtn.addEventListener("click", () => nudge(-1)); // move left to next
-  if (prevBtn) prevBtn.addEventListener("click", () => nudge(+1)); // move right to prev
+  if (nextBtn) nextBtn.addEventListener("click", () => nudge(-1));
+  if (prevBtn) prevBtn.addEventListener("click", () => nudge(+1));
 
-  recalc();
+  // init
+  measure();
+  wrap();
+  applyTransform(currentTranslate);
   start();
+
+  window.addEventListener("resize", () => {
+    measure();
+    wrap();
+    applyTransform(currentTranslate);
+  }, { passive: true });
 });
+
 
 
