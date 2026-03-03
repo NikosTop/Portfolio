@@ -158,10 +158,9 @@ document.addEventListener("DOMContentLoaded", function () {
   // Prevent reverse/jump animation during loop
   track.style.transition = "none";
 
-  // Clone once for infinite feel
+  // ✅ IMPORTANT: DO NOT CLONE (cloning duplicates YouTube iframes -> mobile crashes)
   const originals = Array.from(track.children);
   if (!originals.length) return;
-  originals.forEach(s => track.appendChild(s.cloneNode(true)));
 
   // Measures (slide width + CSS gap)
   let step = 0;
@@ -184,6 +183,14 @@ document.addEventListener("DOMContentLoaded", function () {
   // Mobile: lock pause after any video interaction (resume ONLY on page scroll)
   let mobileLocked = false;
 
+  // ✅ run only when slider is visible (saves CPU, prevents long-idle crashes)
+  let inView = true;
+  const io = new IntersectionObserver(
+    ([entry]) => { inView = entry.isIntersecting; },
+    { threshold: 0.15 }
+  );
+  io.observe(slider);
+
   const SPEED = 70;    // px/sec
   const MAX_DT = 0.05;
 
@@ -200,7 +207,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (dt > MAX_DT) dt = MAX_DT;
     tick.last = t;
 
-    if (!paused && step > 0) {
+    if (!paused && inView && step > 0) {
       setX(x - SPEED * dt);
 
       while (-x >= step) {
@@ -255,20 +262,27 @@ document.addEventListener("DOMContentLoaded", function () {
   });
   window.addEventListener("focus", () => { tick.last = 0; });
 
-  // ===== ✅ Buttons (fixed prev + unlock on mobile) =====
+  // ===== ✅ Buttons (fixed prev + unlock on mobile) + ✅ spam protection =====
   function unlockAndRun() {
-    // If slider was locked because of video interaction on mobile,
-    // button click should unlock and start sliding again.
-    if (isMobile) mobileLocked = false;
+    if (isMobile) mobileLocked = false; // clicking buttons should resume
     paused = false;
-    tick.last = 0; // avoid weird dt jump
+    tick.last = 0;
+  }
+
+  // throttle spam taps (prevents DOM reorder storms -> crashes)
+  let lastTap = 0;
+  const TAP_COOLDOWN = 120; // ms
+
+  function canTapNow() {
+    const now = performance.now();
+    if (now - lastTap < TAP_COOLDOWN) return false;
+    lastTap = now;
+    return true;
   }
 
   function next() {
     if (!step) return;
-
     unlockAndRun();
-    track.style.transition = "none";
 
     // Jump 1 slide forward (left): rotate DOM once
     track.appendChild(track.firstElementChild);
@@ -279,9 +293,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function prev() {
     if (!step) return;
-
     unlockAndRun();
-    track.style.transition = "none";
 
     // Jump 1 slide back (right): rotate DOM backwards once
     track.insertBefore(track.lastElementChild, track.firstElementChild);
@@ -290,8 +302,25 @@ document.addEventListener("DOMContentLoaded", function () {
     setX(x);
   }
 
-  if (nextBtn) nextBtn.addEventListener("click", next);
-  if (prevBtn) prevBtn.addEventListener("click", prev);
+  function onNextTap(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!canTapNow()) return;
+    next();
+  }
+  function onPrevTap(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!canTapNow()) return;
+    prev();
+  }
+
+  // pointerdown is best on mobile; click fallback still works
+  if (nextBtn) nextBtn.addEventListener("pointerdown", onNextTap, { passive: false });
+  if (prevBtn) prevBtn.addEventListener("pointerdown", onPrevTap, { passive: false });
+
+  if (nextBtn) nextBtn.addEventListener("click", onNextTap);
+  if (prevBtn) prevBtn.addEventListener("click", onPrevTap);
 
   // ===== ✅ YouTube API: pause on PLAYING OR PAUSED (mobile requirement) =====
   function hookYouTubePause() {
@@ -331,6 +360,7 @@ document.addEventListener("DOMContentLoaded", function () {
   setX(0);
   start();
 });
+
 
 
 
