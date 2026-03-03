@@ -832,7 +832,7 @@ body{
     }
 
     .slide-track {
-        -webkit-overflow-scrolling: touch;
+        
         gap: 15px;
     }
 
@@ -969,6 +969,7 @@ body{
 
     }
 }
+
 
 
 
