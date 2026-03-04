@@ -137,72 +137,53 @@ document.addEventListener("DOMContentLoaded", function() {
 // });
 
 document.addEventListener("DOMContentLoaded", function () {
-  // ===== TITLE ANIMATION =====
-  const title = document.querySelector(".video-title");
-  if (title) {
-    setTimeout(() => {
-      title.classList.remove("hidden-title");
-      title.classList.add("show-title");
-    }, 1500);
-  }
-
-  // ===== SLIDER CORE =====
   const slider = document.querySelector(".slider");
-  const track = document.querySelector(".slide-track");
+  const track  = document.querySelector(".slide-track");
   const prevBtn = document.querySelector(".prev");
   const nextBtn = document.querySelector(".next");
   if (!slider || !track) return;
 
   const isMobile = window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
 
-  // Prevent reverse/jump animation during loop
   track.style.transition = "none";
 
-  // ✅ IMPORTANT: DO NOT CLONE (cloning duplicates YouTube iframes -> mobile crashes)
-  const originals = Array.from(track.children);
-  if (!originals.length) return;
+  // ✅ No clones (cloning iframes is a top cause of mobile crashes)
+  if (!track.children.length) return;
 
-  // Measures (slide width + CSS gap)
+  // Measure step = slide width + CSS gap
   let step = 0;
   function measureStep() {
     const first = track.children[0];
     if (!first) return;
-
     const w = first.getBoundingClientRect().width;
     const cs = getComputedStyle(track);
     const gap = parseFloat(cs.gap || cs.columnGap || "0") || 0;
-
     step = w + gap;
   }
 
-  // Continuous state
+  // Only animate while slider is in view
+  let inView = true;
+  const io = new IntersectionObserver(([entry]) => {
+    inView = entry.isIntersecting;
+  }, { threshold: 0.15 });
+  io.observe(slider);
+
+  // Motion state
   let x = 0;
   let rafId = null;
   let paused = false;
-
-  // Mobile: lock pause after video interaction (resume on scroll/swipe or arrows)
   let mobileLocked = false;
 
-  // ✅ run only when slider is visible (saves CPU, prevents long-idle crashes)
-  let inView = true;
-  const io = new IntersectionObserver(
-    ([entry]) => { inView = entry.isIntersecting; },
-    { threshold: 0.15 }
-  );
-  io.observe(slider);
-
-  const SPEED = 70;    // px/sec
-  const MAX_DT = 0.05;
+  const SPEED = 70;      // px/sec
+  const MAX_DT = 0.05;   // prevent catch-up burst
 
   function setX(v) {
     x = v;
     track.style.transform = `translate3d(${Math.round(x)}px,0,0)`;
   }
 
-  // Conveyor-belt loop (no teleport wrap => no blink)
   function tick(t) {
     if (!tick.last) tick.last = t;
-
     let dt = (t - tick.last) / 1000;
     if (dt > MAX_DT) dt = MAX_DT;
     tick.last = t;
@@ -236,19 +217,12 @@ document.addEventListener("DOMContentLoaded", function () {
     tick.last = 0;
   }
 
-  function resume() {
-    if (isMobile && mobileLocked) return;
-    paused = false;
-  }
-
-  // Desktop: pause on hover
+  // Desktop hover pause
   slider.addEventListener("mouseenter", () => { if (!isMobile) pause(false); });
-  slider.addEventListener("mouseleave", () => { if (!isMobile) resume(); });
+  slider.addEventListener("mouseleave", () => { if (!isMobile) paused = false; });
 
-  // Mobile: unlock/resume on real scroll OR vertical swipe gesture
+  // Mobile unlock: scroll OR vertical swipe gesture (helps S24 where iframe eats scroll)
   if (isMobile) {
-    let lastY = window.scrollY;
-
     const unlock = () => {
       if (!mobileLocked) return;
       mobileLocked = false;
@@ -256,6 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
       tick.last = 0;
     };
 
+    let lastY = window.scrollY;
     window.addEventListener("scroll", () => {
       const y = window.scrollY;
       if (y !== lastY) unlock();
@@ -278,22 +253,25 @@ document.addEventListener("DOMContentLoaded", function () {
     }, { passive: true, capture: true });
   }
 
-  // No speed burst after tab switching
+  // Visibility handling (no catch-up)
   document.addEventListener("visibilitychange", () => {
     tick.last = 0;
     if (document.hidden) paused = true;
-    else if (!(isMobile && mobileLocked)) paused = false;
   });
   window.addEventListener("focus", () => { tick.last = 0; });
 
-  // ===== Buttons (prev/next) + spam protection (prevents crashes) =====
+  // ===== Buttons: hard anti-spam =====
+  let lockedClicks = false;
   let lastTap = 0;
-  const TAP_COOLDOWN = 140; // ms
+  const TAP_COOLDOWN = 180;
 
-  function canTapNow(){
+  function guardTap() {
     const now = performance.now();
+    if (lockedClicks) return false;
     if (now - lastTap < TAP_COOLDOWN) return false;
     lastTap = now;
+    lockedClicks = true;
+    setTimeout(() => { lockedClicks = false; }, TAP_COOLDOWN);
     return true;
   }
 
@@ -311,23 +289,26 @@ document.addEventListener("DOMContentLoaded", function () {
     setX(x);
   }
 
-  function bindArrow(btn, fn){
+  function bindArrow(btn, fn) {
     if (!btn) return;
     btn.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      if (!canTapNow()) return;
+      if (!guardTap()) return;
       fn();
     }, { passive: false });
   }
 
-  // Use pointerdown only (avoid click duplicates on mobile)
   bindArrow(nextBtn, next);
   bindArrow(prevBtn, prev);
 
-  // ===== YouTube API: pause/lock + 1-tap play on mobile (S24 fix) =====
+  // ===== YouTube API: lock on play/pause + ONE-TAP PLAY FIX (S24) =====
   const players = new Map();   // iframe -> player
-  const playQueue = new Set(); // iframes to play when ready
+
+  function setIframeInteractive(iframe, on) {
+    if (!isMobile) return;
+    iframe.style.pointerEvents = on ? "auto" : "none";
+  }
 
   function hookYouTube() {
     if (!window.YT || !YT.Player) return;
@@ -337,27 +318,56 @@ document.addEventListener("DOMContentLoaded", function () {
       if (iframe._ytBound) return;
       iframe._ytBound = true;
 
+      // ensure starts non-interactive on mobile (first tap handled by page)
+      setIframeInteractive(iframe, false);
+
       const player = new YT.Player(iframe, {
         events: {
           onReady: () => {
             players.set(iframe, player);
-            if (playQueue.has(iframe)) {
-              playQueue.delete(iframe);
-              try { player.playVideo(); } catch (_) {}
-            }
           },
           onStateChange: (e) => {
-            // lock slider on PLAYING or PAUSED
             if (e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.PAUSED) {
               pause(true);
+              // while user is interacting with video, allow controls
+              setIframeInteractive(iframe, true);
+            }
+
+            // optional: when ended, you can disable again so next play is 1-tap
+            if (e.data === YT.PlayerState.ENDED) {
+              // keep locked until scroll/gesture/buttons per your rule
+              setIframeInteractive(iframe, false);
             }
           }
         }
       });
 
-      // store early too
       players.set(iframe, player);
     });
+
+    // ✅ Mobile: first tap anywhere on a slide triggers play and locks slider
+    if (isMobile) {
+      slider.addEventListener("pointerdown", (e) => {
+        const slide = e.target?.closest?.(".slide");
+        if (!slide) return;
+
+        const iframe = slide.querySelector("iframe");
+        if (!iframe) return;
+
+        // Stop slider immediately
+        pause(true);
+
+        // Start playing via API (counts as user gesture)
+        const p = players.get(iframe);
+        if (p && typeof p.playVideo === "function") {
+          try { p.playVideo(); } catch (_) {}
+        }
+
+        // Let the user use controls after we start
+        setIframeInteractive(iframe, true);
+
+      }, { passive: true, capture: true });
+    }
   }
 
   if (window.YT && YT.Player) {
@@ -370,24 +380,6 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   }
 
-  // Mobile: 1 tap on iframe should play (even on S24 Ultra)
-  if (isMobile) {
-    slider.addEventListener("pointerdown", (e) => {
-      const iframe =
-        e.target?.tagName === "IFRAME" ? e.target : e.target?.closest?.("iframe");
-      if (!iframe) return;
-
-      pause(true); // stop slider immediately
-
-      const p = players.get(iframe);
-      if (p && typeof p.playVideo === "function") {
-        try { p.playVideo(); } catch (_) {}
-      } else {
-        playQueue.add(iframe);
-      }
-    }, { passive: true, capture: true });
-  }
-
   // init
   measureStep();
   window.addEventListener("resize", measureStep, { passive: true });
@@ -395,6 +387,7 @@ document.addEventListener("DOMContentLoaded", function () {
   setX(0);
   start();
 });
+
 
 
 
