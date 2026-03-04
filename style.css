@@ -1017,7 +1017,7 @@ body{
 .slide .yt.is-playing .play,
 .slide .yt.is-playing::before{ display:none; }
 
-@media (hover: none) and (pointer: coarse){
+@media (pointer: coarse), (max-width: 1024px) {
 
   .slider{
     overflow-x: auto;
@@ -1041,6 +1041,7 @@ body{
   .slider::-webkit-scrollbar{ display:none; }
   .slider{ scrollbar-width: none; }
 }
+
 
 
 
