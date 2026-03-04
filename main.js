@@ -148,20 +148,17 @@ document.addEventListener("DOMContentLoaded", function () {
   // No transition for continuous move
   track.style.transition = "none";
 
-  // --- Build thumbnails from .yt[data-id] ---
-  // Your HTML must be:
-  // <div class="slide"><div class="yt" data-id="VIDEO_ID"><span class="play"></span></div></div>
+  // ---------- Thumbnails ----------
   const thumbs = track.querySelectorAll(".yt[data-id]");
   thumbs.forEach((el) => {
     const id = el.getAttribute("data-id");
     if (!id) return;
 
-    // maxres first, fallback to hq (prevents "missing thumbnails" look)
     const maxres = `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
-    const hq = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+    const hq     = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
 
     const img = new Image();
-    img.onload = () => { el.style.backgroundImage = `url(${maxres})`; };
+    img.onload  = () => { el.style.backgroundImage = `url(${maxres})`; };
     img.onerror = () => { el.style.backgroundImage = `url(${hq})`; };
     img.src = maxres;
 
@@ -172,7 +169,29 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // --- Measure step (slide width + CSS gap) ---
+  // ---------- Helpers: reset player -> thumbnail ----------
+  function ensurePlayIcon(yt) {
+    if (!yt.querySelector(".play")) {
+      const p = document.createElement("span");
+      p.className = "play";
+      yt.appendChild(p);
+    }
+  }
+
+  function resetYt(yt) {
+    if (!yt) return;
+    if (!yt.classList.contains("is-playing")) return;
+
+    yt.classList.remove("is-playing");
+    yt.innerHTML = "";           // removes iframe
+    ensurePlayIcon(yt);          // restores play icon
+  }
+
+  function resetAllYt() {
+    track.querySelectorAll(".yt.is-playing").forEach(resetYt);
+  }
+
+  // ---------- Measure step (slide width + CSS gap) ----------
   let step = 0;
   function measureStep() {
     const first = track.children[0];
@@ -183,24 +202,28 @@ document.addEventListener("DOMContentLoaded", function () {
     step = w + gap;
   }
 
-  // --- Motion state ---
+  // ---------- Motion state ----------
   let x = 0;
   let paused = false;
   let mobileLocked = false;
 
-  const SPEED = 70;     // px/sec
-  const MAX_DT = 0.05;  // prevent catch-up burst
+  const SPEED = 70;
+  const MAX_DT = 0.05;
 
   function setX(v) {
     x = v;
     track.style.transform = `translate3d(${Math.round(x)}px,0,0)`;
   }
 
-  // inView handling: pause when off-screen, resume when back (unless locked)
+  // inView handling: pause when off-screen; resume when back (unless locked)
   let inView = true;
   const io = new IntersectionObserver(([entry]) => {
     inView = entry.isIntersecting;
+
     if (!entry.isIntersecting) {
+      // ✅ user scrolled away -> reset videos back to thumbnails
+      resetAllYt();
+      mobileLocked = false;
       paused = true;
     } else {
       if (!(isMobile && mobileLocked)) {
@@ -220,7 +243,12 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!paused && inView && step > 0) {
       setX(x - SPEED * dt);
 
-      // conveyor reorder (safe because we are NOT moving live iframes around)
+      // If the first slide has a playing iframe, reset before reordering (prevents iframe bugs)
+      const firstSlide = track.firstElementChild;
+      const playingYt = firstSlide?.querySelector?.(".yt.is-playing");
+      if (playingYt) resetYt(playingYt);
+
+      // conveyor reorder
       while (-x >= step) {
         track.appendChild(track.firstElementChild);
         setX(x + step);
@@ -270,7 +298,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // --- Arrows + anti-spam ---
+  // ✅ Tap/click anywhere outside slider -> reset back to thumbnails
+  document.addEventListener("pointerdown", (e) => {
+    if (slider.contains(e.target)) return;
+    resetAllYt();
+    mobileLocked = false;
+    // keep slider running
+    if (inView) {
+      paused = false;
+      tick.last = 0;
+    }
+  }, { passive: true });
+
+  // ---------- Arrows + anti-spam ----------
   let lockedClicks = false;
   let lastTap = 0;
   const TAP_COOLDOWN = 420;
@@ -287,6 +327,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function next() {
     if (!step) return;
+    // if something is playing, reset it first (keeps DOM safe)
+    resetAllYt();
     unlockAndResume();
     track.appendChild(track.firstElementChild);
     setX(x);
@@ -294,6 +336,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function prev() {
     if (!step) return;
+    resetAllYt();
     unlockAndResume();
     track.insertBefore(track.lastElementChild, track.firstElementChild);
     setX(x);
@@ -312,16 +355,17 @@ document.addEventListener("DOMContentLoaded", function () {
   bindArrow(nextBtn, next);
   bindArrow(prevBtn, prev);
 
-  // --- Tap-to-play: create iframe only when user taps a thumbnail ---
+  // ---------- Tap-to-play: create iframe only on tap ----------
   track.addEventListener("pointerdown", (e) => {
     const yt = e.target.closest?.(".yt[data-id]");
     if (!yt || yt.classList.contains("is-playing")) return;
 
+    // stop slider immediately
     pause(true);
 
     const id = yt.getAttribute("data-id");
     yt.classList.add("is-playing");
-    yt.innerHTML = ""; // remove overlay/play icon
+    yt.innerHTML = "";
 
     const iframe = document.createElement("iframe");
     iframe.allowFullscreen = true;
@@ -331,7 +375,6 @@ document.addEventListener("DOMContentLoaded", function () {
     iframe.style.width = "100%";
     iframe.style.height = "100%";
     iframe.style.border = "0";
-
     iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&playsinline=1&rel=0`;
 
     yt.appendChild(iframe);
@@ -346,3 +389,4 @@ document.addEventListener("DOMContentLoaded", function () {
   mobileLocked = false;
   requestAnimationFrame(tick);
 });
+
