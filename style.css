@@ -970,9 +970,15 @@ body{
 .slide .yt.is-playing .play,
 .slide .yt.is-playing::before{ display:none; }
 
-@media (pointer: coarse), (max-width: 1024px) {
+/* When video is open, remove overlay so the iframe gets taps */
+.yt.is-playing::before,
+.yt.is-playing::after,
+.yt.is-playing .play{
+  display: none !important;
+}
+.yt iframe{ z-index: 2; position:absolute; inset:0; width:100%; height:100%; border:0; }
 
-    .yt{ touch-action: pan-y; }
+@media (pointer: coarse), (max-width: 1024px) {
     
   .slider{
     overflow-x: auto;
@@ -987,6 +993,10 @@ body{
     will-change: auto;
   }
 
+    .slider, .slide-track, .yt{
+    touch-action: auto !important; /* removes your pan-y lock */
+  }
+    
   .slide{
     scroll-snap-align: center;
     flex: 0 0 auto;
@@ -996,6 +1006,7 @@ body{
   .slider::-webkit-scrollbar{ display:none; }
   .slider{ scrollbar-width: none; }
 }
+
 
 
 
