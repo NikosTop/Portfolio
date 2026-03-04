@@ -137,7 +137,6 @@ document.addEventListener("DOMContentLoaded", function() {
 // });
 
 document.addEventListener("DOMContentLoaded", function () {
-  // ===== TITLE ANIMATION =====
   const title = document.querySelector(".video-title");
   if (title) {
     setTimeout(() => {
@@ -146,7 +145,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 1500);
   }
 
-  // ===== SLIDER CORE =====
   const slider = document.querySelector(".slider");
   const track = document.querySelector(".slide-track");
   const prevBtn = document.querySelector(".prev");
@@ -155,43 +153,33 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const isMobile = window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
 
-  // Prevent reverse/jump animation during loop
   track.style.transition = "none";
 
-  // ✅ IMPORTANT: DO NOT CLONE (cloning duplicates YouTube iframes -> mobile crashes)
   const originals = Array.from(track.children);
   if (!originals.length) return;
 
-  // Measures (slide width + CSS gap)
   let step = 0;
   function measureStep() {
     const first = track.children[0];
     if (!first) return;
-
     const w = first.getBoundingClientRect().width;
     const cs = getComputedStyle(track);
     const gap = parseFloat(cs.gap || cs.columnGap || "0") || 0;
-
     step = w + gap;
   }
 
-  // Continuous state
   let x = 0;
   let rafId = null;
   let paused = false;
-
-  // Mobile: lock pause after any video interaction (resume ONLY on page scroll)
   let mobileLocked = false;
 
-  // ✅ run only when slider is visible (saves CPU, prevents long-idle crashes)
   let inView = true;
-  const io = new IntersectionObserver(
-    ([entry]) => { inView = entry.isIntersecting; },
-    { threshold: 0.15 }
-  );
+  const io = new IntersectionObserver(([entry]) => {
+    inView = entry.isIntersecting;
+  }, { threshold: 0.15 });
   io.observe(slider);
 
-  const SPEED = 70;    // px/sec
+  const SPEED = 70;
   const MAX_DT = 0.05;
 
   function setX(v) {
@@ -199,7 +187,6 @@ document.addEventListener("DOMContentLoaded", function () {
     track.style.transform = `translate3d(${Math.round(x)}px,0,0)`;
   }
 
-  // Conveyor-belt loop (no teleport wrap => no blink)
   function tick(t) {
     if (!tick.last) tick.last = t;
 
@@ -231,15 +218,14 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function resume() {
-    if (isMobile && mobileLocked) return; // only scroll unlocks on mobile
+    if (isMobile && mobileLocked) return;
     paused = false;
   }
 
-  // Desktop: pause on hover
   slider.addEventListener("mouseenter", () => { if (!isMobile) pause(false); });
   slider.addEventListener("mouseleave", () => { if (!isMobile) resume(); });
 
-  // Mobile: resume ONLY on page scroll (your requirement)
+  // resume only on page scroll (your rule)
   if (isMobile) {
     let lastY = window.scrollY;
     const unlockOnScroll = () => {
@@ -254,7 +240,6 @@ document.addEventListener("DOMContentLoaded", function () {
     window.addEventListener("touchmove", unlockOnScroll, { passive: true });
   }
 
-  // No speed burst after tab switching
   document.addEventListener("visibilitychange", () => {
     tick.last = 0;
     if (document.hidden) paused = true;
@@ -262,17 +247,16 @@ document.addEventListener("DOMContentLoaded", function () {
   });
   window.addEventListener("focus", () => { tick.last = 0; });
 
-  // ===== ✅ Buttons (fixed prev + unlock on mobile) + ✅ spam protection =====
+  // Buttons: unlock + resume on mobile
   function unlockAndRun() {
-    if (isMobile) mobileLocked = false; // clicking buttons should resume
+    if (isMobile) mobileLocked = false;
     paused = false;
     tick.last = 0;
   }
 
-  // throttle spam taps (prevents DOM reorder storms -> crashes)
+  // Spam protection
   let lastTap = 0;
-  const TAP_COOLDOWN = 120; // ms
-
+  const TAP_COOLDOWN = 120;
   function canTapNow() {
     const now = performance.now();
     if (now - lastTap < TAP_COOLDOWN) return false;
@@ -283,22 +267,14 @@ document.addEventListener("DOMContentLoaded", function () {
   function next() {
     if (!step) return;
     unlockAndRun();
-
-    // Jump 1 slide forward (left): rotate DOM once
     track.appendChild(track.firstElementChild);
-
-    // Keep translate stable
     setX(x);
   }
 
   function prev() {
     if (!step) return;
     unlockAndRun();
-
-    // Jump 1 slide back (right): rotate DOM backwards once
     track.insertBefore(track.lastElementChild, track.firstElementChild);
-
-    // Keep translate stable
     setX(x);
   }
 
@@ -315,15 +291,16 @@ document.addEventListener("DOMContentLoaded", function () {
     prev();
   }
 
-  // pointerdown is best on mobile; click fallback still works
   if (nextBtn) nextBtn.addEventListener("pointerdown", onNextTap, { passive: false });
   if (prevBtn) prevBtn.addEventListener("pointerdown", onPrevTap, { passive: false });
-
   if (nextBtn) nextBtn.addEventListener("click", onNextTap);
   if (prevBtn) prevBtn.addEventListener("click", onPrevTap);
 
-  // ===== ✅ YouTube API: pause on PLAYING OR PAUSED (mobile requirement) =====
-  function hookYouTubePause() {
+  // ===== YouTube API integration (the real fix for S24) =====
+  const players = new Map();       // iframe -> player
+  const wasPlaying = new WeakMap(); // player -> boolean
+
+  function hookYouTube() {
     if (!window.YT || !YT.Player) return;
 
     const iframes = track.querySelectorAll("iframe");
@@ -331,32 +308,60 @@ document.addEventListener("DOMContentLoaded", function () {
       if (iframe._ytBound) return;
       iframe._ytBound = true;
 
-      new YT.Player(iframe, {
+      const p = new YT.Player(iframe, {
         events: {
           onStateChange: (e) => {
-            if (e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.PAUSED) {
+            // PLAYING = 1, PAUSED = 2
+            if (e.data === YT.PlayerState.PLAYING) {
+              wasPlaying.set(e.target, true);
               pause(true);
+            } else if (e.data === YT.PlayerState.PAUSED) {
+              // lock on PAUSED only if it had been playing (prevents “first tap activation” locking weirdly)
+              if (wasPlaying.get(e.target)) pause(true);
             }
           }
         }
       });
+
+      players.set(iframe, p);
     });
   }
 
   if (window.YT && YT.Player) {
-    hookYouTubePause();
+    hookYouTube();
   } else {
     const prevReady = window.onYouTubeIframeAPIReady;
     window.onYouTubeIframeAPIReady = function () {
       if (typeof prevReady === "function") prevReady();
-      hookYouTubePause();
+      hookYouTube();
     };
+  }
+
+  // ✅ Mobile: 1 tap should PLAY even on S24 Ultra
+  // We call player.playVideo() inside the tap event (counts as user gesture).
+  if (isMobile) {
+    slider.addEventListener("pointerdown", (e) => {
+      const iframe = e.target && (e.target.tagName === "IFRAME" ? e.target : e.target.closest?.("iframe"));
+      if (!iframe) return;
+
+      const p = players.get(iframe);
+      if (!p || typeof p.playVideo !== "function") return;
+
+      // If it’s already playing, don't force play; just let controls do their thing.
+      try {
+        const state = p.getPlayerState?.();
+        if (state !== YT.PlayerState.PLAYING) {
+          p.playVideo();
+        }
+      } catch (_) {
+        // ignore
+      }
+    }, { passive: true, capture: true });
   }
 
   // init
   measureStep();
   window.addEventListener("resize", measureStep, { passive: true });
-
   setX(0);
   start();
 });
