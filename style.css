@@ -575,10 +575,6 @@ body{
     transition: none !important;
 }
 
-.slider, .slide-track{
-  touch-action: pan-y;
-}
-
 .video-title {
     font-family: 'Josefin Sans', sans-serif;
     font-size: 3vw;
@@ -1000,6 +996,7 @@ body{
   .slider::-webkit-scrollbar{ display:none; }
   .slider{ scrollbar-width: none; }
 }
+
 
 
 
