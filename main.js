@@ -161,12 +161,19 @@ document.addEventListener("DOMContentLoaded", function () {
     step = w + gap;
   }
 
-  // Only animate while slider is in view
-  let inView = true;
-  const io = new IntersectionObserver(([entry]) => {
-    inView = entry.isIntersecting;
-  }, { threshold: 0.15 });
-  io.observe(slider);
+// Only animate while slider is in view
+let inView = true;
+
+const io = new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+    
+      if (!entry.isIntersecting) {
+        paused = true;
+      }
+    
+    }, { threshold: 0.15 });
+    
+    io.observe(slider);
 
   // Motion state
   let x = 0;
@@ -174,7 +181,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let paused = false;
   let mobileLocked = false;
 
-  const SPEED = 70;      // px/sec
+  const SPEED = 55;
   const MAX_DT = 0.05;   // prevent catch-up burst
 
   function setX(v) {
@@ -263,7 +270,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // ===== Buttons: hard anti-spam =====
   let lockedClicks = false;
   let lastTap = 0;
-  const TAP_COOLDOWN = 180;
+  const TAP_COOLDOWN = 420;
 
   function guardTap() {
     const now = performance.now();
@@ -387,6 +394,7 @@ document.addEventListener("DOMContentLoaded", function () {
   setX(0);
   start();
 });
+
 
 
 
