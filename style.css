@@ -967,10 +967,14 @@ body{
 }
 
 @media (hover: none) and (pointer: coarse){
+  .slide iframe{
+    pointer-events: none; /* first tap cannot be eaten by iframe */
+  }
   .slider-btn{
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
   }
 }
+
 
