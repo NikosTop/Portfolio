@@ -619,37 +619,6 @@ body{
     border: none;
 }
 
-/* Navigation Buttons */
-
-.slider-btn {
-    background: rgba(0,0,0,0.7);
-    border: none;
-    color: white;
-    font-size: 24px;
-    padding: 12px 16px;
-    cursor: pointer;
-    border-radius: 50%;
-    position: absolute;
-    z-index: 5;
-    transition: 0.3s ease;
-}
-
-.slider-btn:hover {
-    background: rgb(255, 94, 0);
-}
-
-.prev {
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-.next {
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
 @media only screen and (max-width: 1024px) {
 
     .mainMenu{
@@ -836,18 +805,6 @@ body{
         font-size: 7vw;
         letter-spacing: 4px;
         padding-top: 2vw;
-    }
-
-    .slider-btn {
-    padding: 6px 13px;
-    }
-
-    .prev {
-        left: 5px;
-    }
-
-    .next {
-        right: 5px;
     }
 
     .results-title{
