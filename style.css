@@ -966,6 +966,54 @@ body{
     }
 }
 
+/* lightweight YouTube slide */
+.yt{
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;           /* adjust if you want */
+  overflow: hidden;
+  background: #000 center/cover no-repeat;
+  cursor: pointer;
+}
+
+.yt::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,.15);
+}
+
+.yt::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:64px;
+  height:64px;
+  transform: translate(-50%,-50%);
+  background: rgba(0,0,0,.55);
+  border-radius: 999px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.35);
+}
+
+.yt .play{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform: translate(-38%,-50%);
+  width:0;
+  height:0;
+  border-top:12px solid transparent;
+  border-bottom:12px solid transparent;
+  border-left:18px solid #fff;
+  z-index:2;
+}
+
+.yt.is-playing{ cursor: default; }
+.yt.is-playing::after,
+.yt.is-playing .play,
+.yt.is-playing::before{ display:none; }
 
 
 
