@@ -137,6 +137,7 @@ document.addEventListener("DOMContentLoaded", function() {
 // });
 
 document.addEventListener("DOMContentLoaded", function () {
+  // ===== TITLE ANIMATION =====
   const title = document.querySelector(".video-title");
   if (title) {
     setTimeout(() => {
@@ -145,6 +146,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 1500);
   }
 
+  // ===== SLIDER CORE =====
   const slider = document.querySelector(".slider");
   const track = document.querySelector(".slide-track");
   const prevBtn = document.querySelector(".prev");
@@ -153,33 +155,43 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const isMobile = window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
 
+  // Prevent reverse/jump animation during loop
   track.style.transition = "none";
 
+  // ✅ IMPORTANT: DO NOT CLONE (cloning duplicates YouTube iframes -> mobile crashes)
   const originals = Array.from(track.children);
   if (!originals.length) return;
 
+  // Measures (slide width + CSS gap)
   let step = 0;
   function measureStep() {
     const first = track.children[0];
     if (!first) return;
+
     const w = first.getBoundingClientRect().width;
     const cs = getComputedStyle(track);
     const gap = parseFloat(cs.gap || cs.columnGap || "0") || 0;
+
     step = w + gap;
   }
 
+  // Continuous state
   let x = 0;
   let rafId = null;
   let paused = false;
+
+  // Mobile: lock pause after video interaction (resume on scroll/swipe or arrows)
   let mobileLocked = false;
 
+  // ✅ run only when slider is visible (saves CPU, prevents long-idle crashes)
   let inView = true;
-  const io = new IntersectionObserver(([entry]) => {
-    inView = entry.isIntersecting;
-  }, { threshold: 0.15 });
+  const io = new IntersectionObserver(
+    ([entry]) => { inView = entry.isIntersecting; },
+    { threshold: 0.15 }
+  );
   io.observe(slider);
 
-  const SPEED = 70;
+  const SPEED = 70;    // px/sec
   const MAX_DT = 0.05;
 
   function setX(v) {
@@ -187,6 +199,7 @@ document.addEventListener("DOMContentLoaded", function () {
     track.style.transform = `translate3d(${Math.round(x)}px,0,0)`;
   }
 
+  // Conveyor-belt loop (no teleport wrap => no blink)
   function tick(t) {
     if (!tick.last) tick.last = t;
 
@@ -217,29 +230,55 @@ document.addEventListener("DOMContentLoaded", function () {
     if (isMobile && lockOnMobile) mobileLocked = true;
   }
 
+  function unlockAndResume() {
+    if (isMobile) mobileLocked = false;
+    paused = false;
+    tick.last = 0;
+  }
+
   function resume() {
     if (isMobile && mobileLocked) return;
     paused = false;
   }
 
+  // Desktop: pause on hover
   slider.addEventListener("mouseenter", () => { if (!isMobile) pause(false); });
   slider.addEventListener("mouseleave", () => { if (!isMobile) resume(); });
 
-  // resume only on page scroll (your rule)
+  // Mobile: unlock/resume on real scroll OR vertical swipe gesture
   if (isMobile) {
     let lastY = window.scrollY;
-    const unlockOnScroll = () => {
-      const y = window.scrollY;
-      if (y !== lastY && mobileLocked) {
-        mobileLocked = false;
-        paused = false;
-      }
-      lastY = y;
+
+    const unlock = () => {
+      if (!mobileLocked) return;
+      mobileLocked = false;
+      paused = false;
+      tick.last = 0;
     };
-    window.addEventListener("scroll", unlockOnScroll, { passive: true });
-    window.addEventListener("touchmove", unlockOnScroll, { passive: true });
+
+    window.addEventListener("scroll", () => {
+      const y = window.scrollY;
+      if (y !== lastY) unlock();
+      lastY = y;
+    }, { passive: true });
+
+    let startTouchY = null;
+    document.addEventListener("touchstart", (e) => {
+      startTouchY = e.touches?.[0]?.clientY ?? null;
+    }, { passive: true, capture: true });
+
+    document.addEventListener("touchmove", (e) => {
+      if (!mobileLocked || startTouchY == null) return;
+      const y = e.touches?.[0]?.clientY;
+      if (y == null) return;
+      if (Math.abs(y - startTouchY) > 18) {
+        unlock();
+        startTouchY = null;
+      }
+    }, { passive: true, capture: true });
   }
 
+  // No speed burst after tab switching
   document.addEventListener("visibilitychange", () => {
     tick.last = 0;
     if (document.hidden) paused = true;
@@ -247,17 +286,11 @@ document.addEventListener("DOMContentLoaded", function () {
   });
   window.addEventListener("focus", () => { tick.last = 0; });
 
-  // Buttons: unlock + resume on mobile
-  function unlockAndRun() {
-    if (isMobile) mobileLocked = false;
-    paused = false;
-    tick.last = 0;
-  }
-
-  // Spam protection
+  // ===== Buttons (prev/next) + spam protection (prevents crashes) =====
   let lastTap = 0;
-  const TAP_COOLDOWN = 120;
-  function canTapNow() {
+  const TAP_COOLDOWN = 140; // ms
+
+  function canTapNow(){
     const now = performance.now();
     if (now - lastTap < TAP_COOLDOWN) return false;
     lastTap = now;
@@ -266,39 +299,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function next() {
     if (!step) return;
-    unlockAndRun();
+    unlockAndResume();
     track.appendChild(track.firstElementChild);
     setX(x);
   }
 
   function prev() {
     if (!step) return;
-    unlockAndRun();
+    unlockAndResume();
     track.insertBefore(track.lastElementChild, track.firstElementChild);
     setX(x);
   }
 
-  function onNextTap(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!canTapNow()) return;
-    next();
-  }
-  function onPrevTap(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!canTapNow()) return;
-    prev();
+  function bindArrow(btn, fn){
+    if (!btn) return;
+    btn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!canTapNow()) return;
+      fn();
+    }, { passive: false });
   }
 
-  if (nextBtn) nextBtn.addEventListener("pointerdown", onNextTap, { passive: false });
-  if (prevBtn) prevBtn.addEventListener("pointerdown", onPrevTap, { passive: false });
-  if (nextBtn) nextBtn.addEventListener("click", onNextTap);
-  if (prevBtn) prevBtn.addEventListener("click", onPrevTap);
+  // Use pointerdown only (avoid click duplicates on mobile)
+  bindArrow(nextBtn, next);
+  bindArrow(prevBtn, prev);
 
-  // ===== YouTube API integration (the real fix for S24) =====
-  const players = new Map();       // iframe -> player
-  const wasPlaying = new WeakMap(); // player -> boolean
+  // ===== YouTube API: pause/lock + 1-tap play on mobile (S24 fix) =====
+  const players = new Map();   // iframe -> player
+  const playQueue = new Set(); // iframes to play when ready
 
   function hookYouTube() {
     if (!window.YT || !YT.Player) return;
@@ -308,22 +337,26 @@ document.addEventListener("DOMContentLoaded", function () {
       if (iframe._ytBound) return;
       iframe._ytBound = true;
 
-      const p = new YT.Player(iframe, {
+      const player = new YT.Player(iframe, {
         events: {
+          onReady: () => {
+            players.set(iframe, player);
+            if (playQueue.has(iframe)) {
+              playQueue.delete(iframe);
+              try { player.playVideo(); } catch (_) {}
+            }
+          },
           onStateChange: (e) => {
-            // PLAYING = 1, PAUSED = 2
-            if (e.data === YT.PlayerState.PLAYING) {
-              wasPlaying.set(e.target, true);
+            // lock slider on PLAYING or PAUSED
+            if (e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.PAUSED) {
               pause(true);
-            } else if (e.data === YT.PlayerState.PAUSED) {
-              // lock on PAUSED only if it had been playing (prevents “first tap activation” locking weirdly)
-              if (wasPlaying.get(e.target)) pause(true);
             }
           }
         }
       });
 
-      players.set(iframe, p);
+      // store early too
+      players.set(iframe, player);
     });
   }
 
@@ -337,24 +370,20 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   }
 
-  // ✅ Mobile: 1 tap should PLAY even on S24 Ultra
-  // We call player.playVideo() inside the tap event (counts as user gesture).
+  // Mobile: 1 tap on iframe should play (even on S24 Ultra)
   if (isMobile) {
     slider.addEventListener("pointerdown", (e) => {
-      const iframe = e.target && (e.target.tagName === "IFRAME" ? e.target : e.target.closest?.("iframe"));
+      const iframe =
+        e.target?.tagName === "IFRAME" ? e.target : e.target?.closest?.("iframe");
       if (!iframe) return;
 
-      const p = players.get(iframe);
-      if (!p || typeof p.playVideo !== "function") return;
+      pause(true); // stop slider immediately
 
-      // If it’s already playing, don't force play; just let controls do their thing.
-      try {
-        const state = p.getPlayerState?.();
-        if (state !== YT.PlayerState.PLAYING) {
-          p.playVideo();
-        }
-      } catch (_) {
-        // ignore
+      const p = players.get(iframe);
+      if (p && typeof p.playVideo === "function") {
+        try { p.playVideo(); } catch (_) {}
+      } else {
+        playQueue.add(iframe);
       }
     }, { passive: true, capture: true });
   }
@@ -362,9 +391,11 @@ document.addEventListener("DOMContentLoaded", function () {
   // init
   measureStep();
   window.addEventListener("resize", measureStep, { passive: true });
+
   setX(0);
   start();
 });
+
 
 
 
