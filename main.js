@@ -233,48 +233,48 @@ document.addEventListener("DOMContentLoaded", function () {
     yt.appendChild(iframe);
   }
 
-  if (isTouch) {
-    // Touch: swipe should scroll. Only open on true tap (no horizontal movement).
-    let startX = 0, startY = 0;
-    let moved = false;
-    let targetYt = null;
+ if (isTouch) {
+  let startX = 0, startY = 0;
+  let moved = false;
+  let targetYt = null;
 
-    track.addEventListener("pointerdown", (e) => {
-      const yt = e.target.closest?.(".yt[data-id]");
-      if (!yt || yt.classList.contains("is-playing")) return;
-
-      startX = e.clientX;
-      startY = e.clientY;
-      moved = false;
-      targetYt = yt;
-    }, { passive: true });
-
-    track.addEventListener("pointermove", (e) => {
-      if (!targetYt) return;
-
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-
-      // if it looks like a horizontal swipe, do NOT open
-      if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) {
-        moved = true;
-        targetYt = null; // release so native scroll continues smoothly
-      }
-    }, { passive: true });
-
-    track.addEventListener("pointerup", () => {
-      if (!targetYt) return;
-
-      if (!moved) {
-        // true tap -> open (no autoplay on touch for maximum compatibility)
-        openVideo(targetYt, false);
-      }
-
+  track.addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    const yt = e.target.closest?.(".yt[data-id]");
+    if (!yt || yt.classList.contains("is-playing")) {
       targetYt = null;
-      moved = false;
-    }, { passive: true });
+      return;
+    }
+    startX = t.clientX;
+    startY = t.clientY;
+    moved = false;
+    targetYt = yt;
+  }, { passive: true });
 
-  } else {
+  track.addEventListener("touchmove", (e) => {
+    if (!targetYt) return;
+    const t = e.touches[0];
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+
+    // If user swipes horizontally enough, treat as swipe (do NOT open)
+    if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+      moved = true;
+      targetYt = null;
+    }
+  }, { passive: true });
+
+  track.addEventListener("touchend", () => {
+    if (!targetYt) return;
+
+    // Tap (no swipe) -> open iframe
+    if (!moved) openVideo(targetYt, false);
+
+    targetYt = null;
+    moved = false;
+  }, { passive: true });
+ }
+ else {
     // Desktop: click/tap opens with autoplay
     track.addEventListener("pointerdown", (e) => {
       const yt = e.target.closest?.(".yt[data-id]");
@@ -360,6 +360,7 @@ document.addEventListener("DOMContentLoaded", function () {
   setX(0);
   requestAnimationFrame(tick);
 });
+
 
 
 
