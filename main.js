@@ -143,7 +143,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const nextBtn = document.querySelector(".next");
   if (!slider || !track) return;
 
-  const isTouch = window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
+  const isTouch =
+  (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
+  ("ontouchstart" in window) ||
+  window.matchMedia?.("(pointer: coarse)")?.matches;
 
   // No transition for continuous move (desktop)
   track.style.transition = "none";
@@ -341,4 +344,5 @@ document.addEventListener("DOMContentLoaded", function () {
   paused = false;
   requestAnimationFrame(tick);
 });
+
 
