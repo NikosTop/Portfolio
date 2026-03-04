@@ -137,64 +137,64 @@ document.addEventListener("DOMContentLoaded", function() {
 // });
 
 document.addEventListener("DOMContentLoaded", function () {
-  // ===== (optional) TITLE ANIMATION =====
-  const title = document.querySelector(".video-title");
-  if (title) {
-    setTimeout(() => {
-      title.classList.remove("hidden-title");
-      title.classList.add("show-title");
-    }, 1500);
-  }
-
-  // ===== SLIDER CORE =====
   const slider = document.querySelector(".slider");
-  const track = document.querySelector(".slide-track");
+  const track  = document.querySelector(".slide-track");
   const prevBtn = document.querySelector(".prev");
   const nextBtn = document.querySelector(".next");
   if (!slider || !track) return;
 
   const isMobile = window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
 
-  // keep transforms snappy
+  // IMPORTANT: no DOM re-order of iframes anymore (because we don't keep iframes alive)
+  // We can still use the conveyor re-order safely because slides contain light divs, not iframes.
   track.style.transition = "none";
 
-  // ✅ no clones (iframes)
-  if (!track.children.length) return;
+  // --- build thumbnails ---
+  const thumbs = track.querySelectorAll(".yt[data-id]");
+  thumbs.forEach(el => {
+    const id = el.getAttribute("data-id");
+    el.style.backgroundImage = `url(https://i.ytimg.com/vi/${id}/hqdefault.jpg)`;
+    if (!el.querySelector(".play")) {
+      const p = document.createElement("span");
+      p.className = "play";
+      el.appendChild(p);
+    }
+  });
 
-  // Measure one step (slide width + CSS gap)
+  // --- measure step ---
   let step = 0;
   function measureStep() {
     const first = track.children[0];
     if (!first) return;
-
     const w = first.getBoundingClientRect().width;
     const cs = getComputedStyle(track);
     const gap = parseFloat(cs.gap || cs.columnGap || "0") || 0;
     step = w + gap;
   }
 
-  // Motion state
+  // --- motion state ---
   let x = 0;
-  let rafId = null;
   let paused = false;
-
-  // Mobile: lock pause when video plays/pauses
   let mobileLocked = false;
-
-  // In-view control
-  let inView = true;
-
-  const SPEED = 70;      // px/sec
-  const MAX_DT = 0.05;   // prevent catch-up burst
+  const SPEED = 70;
+  const MAX_DT = 0.05;
 
   function setX(v) {
     x = v;
     track.style.transform = `translate3d(${Math.round(x)}px,0,0)`;
   }
 
+  // run only when visible + resume when visible again
+  let inView = true;
+  const io = new IntersectionObserver(([entry]) => {
+    inView = entry.isIntersecting;
+    if (!entry.isIntersecting) paused = true;
+    else if (!(isMobile && mobileLocked)) { paused = false; tick.last = 0; }
+  }, { threshold: 0.15 });
+  io.observe(slider);
+
   function tick(t) {
     if (!tick.last) tick.last = t;
-
     let dt = (t - tick.last) / 1000;
     if (dt > MAX_DT) dt = MAX_DT;
     tick.last = t;
@@ -202,58 +202,30 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!paused && inView && step > 0) {
       setX(x - SPEED * dt);
 
+      // conveyor re-order (now safe because no live iframes)
       while (-x >= step) {
         track.appendChild(track.firstElementChild);
         setX(x + step);
       }
     }
-
-    rafId = requestAnimationFrame(tick);
+    requestAnimationFrame(tick);
   }
 
-  function start() {
-    if (rafId) cancelAnimationFrame(rafId);
-    tick.last = 0;
-    rafId = requestAnimationFrame(tick);
-  }
-
-  function pause(lockOnMobile = false) {
+  function pause(lockMobile = false) {
     paused = true;
-    if (isMobile && lockOnMobile) mobileLocked = true;
+    if (isMobile && lockMobile) mobileLocked = true;
   }
-
-  function resume() {
-    if (isMobile && mobileLocked) return;
-    paused = false;
-    tick.last = 0;
-  }
-
   function unlockAndResume() {
     if (isMobile) mobileLocked = false;
     paused = false;
     tick.last = 0;
   }
 
-  // ✅ Pause when slider off-screen, resume when back (unless mobileLocked)
-  const io = new IntersectionObserver(([entry]) => {
-    inView = entry.isIntersecting;
-
-    if (!entry.isIntersecting) {
-      paused = true;
-    } else {
-      if (!(isMobile && mobileLocked)) {
-        paused = false;
-        tick.last = 0;
-      }
-    }
-  }, { threshold: 0.15 });
-  io.observe(slider);
-
-  // Desktop: pause on hover, resume on leave
+  // desktop hover pause
   slider.addEventListener("mouseenter", () => { if (!isMobile) pause(false); });
-  slider.addEventListener("mouseleave", () => { if (!isMobile) resume(); });
+  slider.addEventListener("mouseleave", () => { if (!isMobile) { paused = false; tick.last = 0; } });
 
-  // Mobile: unlock/resume ONLY on real page scroll
+  // mobile resume ONLY on real scroll
   if (isMobile) {
     let lastY = window.scrollY;
     window.addEventListener("scroll", () => {
@@ -267,22 +239,14 @@ document.addEventListener("DOMContentLoaded", function () {
     }, { passive: true });
   }
 
-  // ✅ Pause when tab hidden; resume when back (unless mobileLocked)
+  // pause when tab hidden; resume when back (unless locked)
   document.addEventListener("visibilitychange", () => {
     tick.last = 0;
-
-    if (document.hidden) {
-      paused = true;
-    } else {
-      if (!(isMobile && mobileLocked) && inView) {
-        paused = false;
-        tick.last = 0;
-      }
-    }
+    if (document.hidden) paused = true;
+    else if (!(isMobile && mobileLocked) && inView) { paused = false; tick.last = 0; }
   });
-  window.addEventListener("focus", () => { tick.last = 0; });
 
-  // ===== Buttons: unlock+resume + anti-spam =====
+  // --- arrows + anti-spam ---
   let lockedClicks = false;
   let lastTap = 0;
   const TAP_COOLDOWN = 420;
@@ -292,7 +256,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (lockedClicks) return false;
     if (now - lastTap < TAP_COOLDOWN) return false;
     lastTap = now;
-
     lockedClicks = true;
     setTimeout(() => { lockedClicks = false; }, TAP_COOLDOWN);
     return true;
@@ -321,50 +284,44 @@ document.addEventListener("DOMContentLoaded", function () {
       fn();
     }, { passive: false });
   }
-
   bindArrow(nextBtn, next);
   bindArrow(prevBtn, prev);
 
-  // ===== YouTube API: lock on PLAYING or PAUSED (works every time) =====
-  function hookYouTube() {
-    if (!window.YT || !YT.Player) return;
+  // --- tap to create iframe + autoplay ---
+  track.addEventListener("pointerdown", (e) => {
+    const yt = e.target.closest?.(".yt[data-id]");
+    if (!yt || yt.classList.contains("is-playing")) return;
 
-    const iframes = track.querySelectorAll("iframe");
-    iframes.forEach((iframe) => {
-      if (iframe._ytBound) return;
-      iframe._ytBound = true;
+    // pause slider and lock on mobile
+    pause(true);
 
-      new YT.Player(iframe, {
-        events: {
-          onStateChange: (e) => {
-            if (e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.PAUSED) {
-              pause(true);
-            }
-          }
-        }
-      });
-    });
-  }
+    const id = yt.getAttribute("data-id");
 
-  if (window.YT && YT.Player) {
-    hookYouTube();
-  } else {
-    const prevReady = window.onYouTubeIframeAPIReady;
-    window.onYouTubeIframeAPIReady = function () {
-      if (typeof prevReady === "function") prevReady();
-      hookYouTube();
-    };
-  }
+    yt.classList.add("is-playing");
+    yt.innerHTML = ""; // remove play icon/overlay
+
+    const iframe = document.createElement("iframe");
+    iframe.width = "100%";
+    iframe.height = "100%";
+    iframe.style.position = "absolute";
+    iframe.style.inset = "0";
+    iframe.style.border = "0";
+    iframe.allowFullscreen = true;
+
+    // IMPORTANT: allow autoplay for consistent Android behavior
+    iframe.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture");
+
+    iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&playsinline=1&rel=0`;
+
+    yt.appendChild(iframe);
+  }, { passive: true });
 
   // init
   measureStep();
   window.addEventListener("resize", measureStep, { passive: true });
 
   setX(0);
-  paused = false;         // ✅ start sliding immediately
-  mobileLocked = false;   // ✅
-  start();
+  paused = false;
+  mobileLocked = false;
+  requestAnimationFrame(tick);
 });
-
-
-
