@@ -966,25 +966,27 @@ body{
     }
 }
 
-/* lightweight YouTube slide */
-.yt{
-  position: relative;
+/* Thumbnail block should fill the whole 9:16 slide */
+.slide { position: relative; } /* you already have this, keep */
+
+.slide .yt{
+  position: absolute;
+  inset: 0;                 /* fill the entire slide */
   width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: 14px;           /* adjust if you want */
-  overflow: hidden;
+  height: 100%;
   background: #000 center/cover no-repeat;
   cursor: pointer;
 }
 
-.yt::before{
+/* play overlay */
+.slide .yt::before{
   content:"";
   position:absolute;
   inset:0;
   background: rgba(0,0,0,.15);
 }
 
-.yt::after{
+.slide .yt::after{
   content:"";
   position:absolute;
   left:50%;
@@ -997,7 +999,7 @@ body{
   box-shadow: 0 8px 30px rgba(0,0,0,.35);
 }
 
-.yt .play{
+.slide .yt .play{
   position:absolute;
   left:50%;
   top:50%;
@@ -1010,10 +1012,11 @@ body{
   z-index:2;
 }
 
-.yt.is-playing{ cursor: default; }
-.yt.is-playing::after,
-.yt.is-playing .play,
-.yt.is-playing::before{ display:none; }
+.slide .yt.is-playing{ cursor: default; }
+.slide .yt.is-playing::after,
+.slide .yt.is-playing .play,
+.slide .yt.is-playing::before{ display:none; }
+
 
 
 
