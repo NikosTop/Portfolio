@@ -141,13 +141,13 @@ document.addEventListener("DOMContentLoaded", function () {
   const track  = document.querySelector(".slide-track");
   if (!slider || !track) return;
 
-  // Robust touch detection (works on S24 too)
+  // Robust touch detection (fixes S24 mis-detection)
   const isTouch =
     (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
     ("ontouchstart" in window) ||
     window.matchMedia?.("(pointer: coarse)")?.matches;
 
-  // Thumbnails
+  // ---------- Thumbnails ----------
   const thumbs = track.querySelectorAll(".yt[data-id]");
   thumbs.forEach((el) => {
     const id = el.getAttribute("data-id");
@@ -168,7 +168,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Reset helpers
+  // ---------- Helpers: reset player -> thumbnail ----------
   function ensurePlayIcon(yt) {
     if (!yt.querySelector(".play")) {
       const p = document.createElement("span");
@@ -188,19 +188,39 @@ document.addEventListener("DOMContentLoaded", function () {
     track.querySelectorAll(".yt.is-playing").forEach(resetYt);
   }
 
-  // Tap-to-play (no autoplay on touch to avoid Samsung restrictions / "!" errors)
-  track.addEventListener("pointerdown", (e) => {
-    const yt = e.target.closest?.(".yt[data-id]");
+  // ---------- Reset when tap outside slider ----------
+  document.addEventListener("pointerdown", (e) => {
+    if (slider.contains(e.target)) return;
+    resetAllYt();
+  }, { passive: true });
+
+  // ---------- Reset when scrolled away ----------
+  const ioReset = new IntersectionObserver(([entry]) => {
+    if (!entry.isIntersecting) resetAllYt();
+  }, { threshold: 0.15 });
+  ioReset.observe(slider);
+
+  // ---------- Tap-to-play that DOES NOT block swipe on touch devices ----------
+  function openVideo(yt, autoplay) {
     if (!yt || yt.classList.contains("is-playing")) return;
 
     const id = yt.getAttribute("data-id");
+    if (!id) return;
 
     yt.classList.add("is-playing");
     yt.innerHTML = "";
 
     const iframe = document.createElement("iframe");
     iframe.allowFullscreen = true;
-    iframe.setAttribute("allow", isTouch ? "encrypted-media; picture-in-picture" : "autoplay; encrypted-media; picture-in-picture");
+
+    // Avoid autoplay on touch devices (Android can block, causes "!" errors)
+    iframe.setAttribute(
+      "allow",
+      autoplay
+        ? "autoplay; encrypted-media; picture-in-picture"
+        : "encrypted-media; picture-in-picture"
+    );
+
     iframe.style.position = "absolute";
     iframe.style.inset = "0";
     iframe.style.width = "100%";
@@ -208,41 +228,82 @@ document.addEventListener("DOMContentLoaded", function () {
     iframe.style.border = "0";
 
     const base = `https://www.youtube.com/embed/${id}?playsinline=1&rel=0`;
-    iframe.src = isTouch ? base : `${base}&autoplay=1`;
+    iframe.src = autoplay ? `${base}&autoplay=1` : base;
 
     yt.appendChild(iframe);
-  }, { passive: true });
+  }
 
-  // Reset when tap outside slider
-  document.addEventListener("pointerdown", (e) => {
-    if (slider.contains(e.target)) return;
-    resetAllYt();
-  }, { passive: true });
+  if (isTouch) {
+    // Touch: swipe should scroll. Only open on true tap (no horizontal movement).
+    let startX = 0, startY = 0;
+    let moved = false;
+    let targetYt = null;
 
-  // Reset when scrolled away
-  const io = new IntersectionObserver(([entry]) => {
-    if (!entry.isIntersecting) resetAllYt();
-  }, { threshold: 0.15 });
-  io.observe(slider);
+    track.addEventListener("pointerdown", (e) => {
+      const yt = e.target.closest?.(".yt[data-id]");
+      if (!yt || yt.classList.contains("is-playing")) return;
 
-  // --- TOUCH: swipe-only (NO auto move) ---
+      startX = e.clientX;
+      startY = e.clientY;
+      moved = false;
+      targetYt = yt;
+    }, { passive: true });
+
+    track.addEventListener("pointermove", (e) => {
+      if (!targetYt) return;
+
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      // if it looks like a horizontal swipe, do NOT open
+      if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) {
+        moved = true;
+        targetYt = null; // release so native scroll continues smoothly
+      }
+    }, { passive: true });
+
+    track.addEventListener("pointerup", () => {
+      if (!targetYt) return;
+
+      if (!moved) {
+        // true tap -> open (no autoplay on touch for maximum compatibility)
+        openVideo(targetYt, false);
+      }
+
+      targetYt = null;
+      moved = false;
+    }, { passive: true });
+
+  } else {
+    // Desktop: click/tap opens with autoplay
+    track.addEventListener("pointerdown", (e) => {
+      const yt = e.target.closest?.(".yt[data-id]");
+      if (!yt || yt.classList.contains("is-playing")) return;
+      openVideo(yt, true);
+    }, { passive: true });
+  }
+
+  // ---------- TOUCH DEVICES: swipe-only (NO auto-move) ----------
   if (isTouch) return;
 
-  // --- DESKTOP: auto-moving loop ---
+  // ---------- DESKTOP: auto-moving loop ----------
   track.style.transition = "none";
 
   let step = 0;
   function measureStep() {
     const first = track.children[0];
     if (!first) return;
+
     const w = first.getBoundingClientRect().width;
     const cs = getComputedStyle(track);
     const gap = parseFloat(cs.gap || cs.columnGap || "0") || 0;
+
     step = w + gap;
   }
 
   let x = 0;
   let paused = false;
+
   const SPEED = 70;
   const MAX_DT = 0.05;
 
@@ -251,6 +312,15 @@ document.addEventListener("DOMContentLoaded", function () {
     track.style.transform = `translate3d(${Math.round(x)}px,0,0)`;
   }
 
+  // pause when off-screen, resume when back
+  let inView = true;
+  const ioRun = new IntersectionObserver(([entry]) => {
+    inView = entry.isIntersecting;
+    if (!entry.isIntersecting) paused = true;
+    else { paused = false; tick.last = 0; }
+  }, { threshold: 0.15 });
+  ioRun.observe(slider);
+
   function tick(t) {
     if (!tick.last) tick.last = t;
 
@@ -258,10 +328,10 @@ document.addEventListener("DOMContentLoaded", function () {
     if (dt > MAX_DT) dt = MAX_DT;
     tick.last = t;
 
-    if (!paused && step > 0) {
+    if (!paused && inView && step > 0) {
       setX(x - SPEED * dt);
 
-      // if first slide is playing, reset before reordering (keeps it stable)
+      // If first slide has an open video, reset before reorder (keeps it stable)
       const firstSlide = track.firstElementChild;
       const playingYt = firstSlide?.querySelector?.(".yt.is-playing");
       if (playingYt) resetYt(playingYt);
@@ -278,12 +348,19 @@ document.addEventListener("DOMContentLoaded", function () {
   slider.addEventListener("mouseenter", () => { paused = true; });
   slider.addEventListener("mouseleave", () => { paused = false; tick.last = 0; });
 
+  document.addEventListener("visibilitychange", () => {
+    tick.last = 0;
+    if (document.hidden) paused = true;
+    else { paused = false; tick.last = 0; }
+  });
+
   measureStep();
   window.addEventListener("resize", measureStep, { passive: true });
 
   setX(0);
   requestAnimationFrame(tick);
 });
+
 
 
 
