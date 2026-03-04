@@ -143,9 +143,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const nextBtn = document.querySelector(".next");
   if (!slider || !track) return;
 
-  const isMobile = window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
+  const isTouch = window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
 
-  // No transition for continuous move
+  // No transition for continuous move (desktop)
   track.style.transition = "none";
 
   // ---------- Thumbnails ----------
@@ -179,19 +179,74 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function resetYt(yt) {
-    if (!yt) return;
-    if (!yt.classList.contains("is-playing")) return;
-
+    if (!yt || !yt.classList.contains("is-playing")) return;
     yt.classList.remove("is-playing");
-    yt.innerHTML = "";           // removes iframe
-    ensurePlayIcon(yt);          // restores play icon
+    yt.innerHTML = "";
+    ensurePlayIcon(yt);
   }
 
   function resetAllYt() {
     track.querySelectorAll(".yt.is-playing").forEach(resetYt);
   }
 
-  // ---------- Measure step (slide width + CSS gap) ----------
+  // ---------- Tap-to-play (ALL devices) ----------
+  // On touch devices we DO NOT autoplay to avoid Android blocking + "!" errors.
+  // User will tap the YouTube play button normally (100% consistent).
+  track.addEventListener("pointerdown", (e) => {
+    const yt = e.target.closest?.(".yt[data-id]");
+    if (!yt || yt.classList.contains("is-playing")) return;
+
+    const id = yt.getAttribute("data-id");
+    yt.classList.add("is-playing");
+    yt.innerHTML = "";
+
+    const iframe = document.createElement("iframe");
+    iframe.allowFullscreen = true;
+    iframe.setAttribute("allow", "encrypted-media; picture-in-picture"); // no autoplay on touch
+    iframe.style.position = "absolute";
+    iframe.style.inset = "0";
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
+    iframe.style.border = "0";
+
+    const base = `https://www.youtube.com/embed/${id}?playsinline=1&rel=0`;
+    iframe.src = isTouch ? base : `${base}&autoplay=1`; // desktop can autoplay safely
+
+    yt.appendChild(iframe);
+
+    // If touch device: allow user to swipe/scroll immediately, no locks.
+    // If desktop: keep your behaviour (you can still hover to pause via CSS/JS if you want).
+  }, { passive: true });
+
+  // ✅ Reset when user taps outside slider
+  document.addEventListener("pointerdown", (e) => {
+    if (slider.contains(e.target)) return;
+    resetAllYt();
+  }, { passive: true });
+
+  // ✅ Reset when user scrolls away from slider
+  const io = new IntersectionObserver(([entry]) => {
+    if (!entry.isIntersecting) resetAllYt();
+  }, { threshold: 0.15 });
+  io.observe(slider);
+
+  // ---------- TOUCH DEVICES: swipe only (NO auto-move) ----------
+  if (isTouch) {
+    // On touch devices we rely on native horizontal scroll (CSS scroll-snap).
+    // We only keep arrows working by scrolling the container.
+    const stepPx = 320 + 25; // approximate; real snapping handles it anyway
+
+    function scrollByOne(dir) {
+      slider.scrollBy({ left: dir * stepPx, behavior: "smooth" });
+    }
+
+    if (nextBtn) nextBtn.addEventListener("click", () => scrollByOne(+1));
+    if (prevBtn) prevBtn.addEventListener("click", () => scrollByOne(-1));
+
+    return; // ✅ IMPORTANT: stop here, no requestAnimationFrame loop on touch
+  }
+
+  // ---------- DESKTOP: keep auto-moving loop ----------
   let step = 0;
   function measureStep() {
     const first = track.children[0];
@@ -202,10 +257,8 @@ document.addEventListener("DOMContentLoaded", function () {
     step = w + gap;
   }
 
-  // ---------- Motion state ----------
   let x = 0;
   let paused = false;
-  let mobileLocked = false;
 
   const SPEED = 70;
   const MAX_DT = 0.05;
@@ -215,40 +268,20 @@ document.addEventListener("DOMContentLoaded", function () {
     track.style.transform = `translate3d(${Math.round(x)}px,0,0)`;
   }
 
-  // inView handling: pause when off-screen; resume when back (unless locked)
-  let inView = true;
-  const io = new IntersectionObserver(([entry]) => {
-    inView = entry.isIntersecting;
-
-    if (!entry.isIntersecting) {
-      // ✅ user scrolled away -> reset videos back to thumbnails
-      resetAllYt();
-      mobileLocked = false;
-      paused = true;
-    } else {
-      if (!(isMobile && mobileLocked)) {
-        paused = false;
-        tick.last = 0;
-      }
-    }
-  }, { threshold: 0.15 });
-  io.observe(slider);
-
   function tick(t) {
     if (!tick.last) tick.last = t;
     let dt = (t - tick.last) / 1000;
     if (dt > MAX_DT) dt = MAX_DT;
     tick.last = t;
 
-    if (!paused && inView && step > 0) {
+    if (!paused && step > 0) {
       setX(x - SPEED * dt);
 
-      // If the first slide has a playing iframe, reset before reordering (prevents iframe bugs)
+      // reset any playing iframe before reordering
       const firstSlide = track.firstElementChild;
       const playingYt = firstSlide?.querySelector?.(".yt.is-playing");
       if (playingYt) resetYt(playingYt);
 
-      // conveyor reorder
       while (-x >= step) {
         track.appendChild(track.firstElementChild);
         setX(x + step);
@@ -258,59 +291,11 @@ document.addEventListener("DOMContentLoaded", function () {
     requestAnimationFrame(tick);
   }
 
-  function pause(lockMobile = false) {
-    paused = true;
-    if (isMobile && lockMobile) mobileLocked = true;
-  }
+  // Pause on hover (desktop)
+  slider.addEventListener("mouseenter", () => { paused = true; });
+  slider.addEventListener("mouseleave", () => { paused = false; tick.last = 0; });
 
-  function unlockAndResume() {
-    if (isMobile) mobileLocked = false;
-    paused = false;
-    tick.last = 0;
-  }
-
-  // Desktop hover pause
-  slider.addEventListener("mouseenter", () => { if (!isMobile) pause(false); });
-  slider.addEventListener("mouseleave", () => { if (!isMobile) { paused = false; tick.last = 0; } });
-
-  // Mobile resume ONLY on real page scroll
-  if (isMobile) {
-    let lastY = window.scrollY;
-    window.addEventListener("scroll", () => {
-      const y = window.scrollY;
-      if (y !== lastY && mobileLocked) {
-        mobileLocked = false;
-        paused = false;
-        tick.last = 0;
-      }
-      lastY = y;
-    }, { passive: true });
-  }
-
-  // Pause when tab hidden; resume when back (unless locked)
-  document.addEventListener("visibilitychange", () => {
-    tick.last = 0;
-    if (document.hidden) {
-      paused = true;
-    } else if (!(isMobile && mobileLocked) && inView) {
-      paused = false;
-      tick.last = 0;
-    }
-  });
-
-  // ✅ Tap/click anywhere outside slider -> reset back to thumbnails
-  document.addEventListener("pointerdown", (e) => {
-    if (slider.contains(e.target)) return;
-    resetAllYt();
-    mobileLocked = false;
-    // keep slider running
-    if (inView) {
-      paused = false;
-      tick.last = 0;
-    }
-  }, { passive: true });
-
-  // ---------- Arrows + anti-spam ----------
+  // Arrows (desktop) keep your behaviour
   let lockedClicks = false;
   let lastTap = 0;
   const TAP_COOLDOWN = 420;
@@ -327,66 +312,33 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function next() {
     if (!step) return;
-    // if something is playing, reset it first (keeps DOM safe)
+    if (!guardTap()) return;
     resetAllYt();
-    unlockAndResume();
     track.appendChild(track.firstElementChild);
     setX(x);
+    paused = false;
+    tick.last = 0;
   }
 
   function prev() {
     if (!step) return;
+    if (!guardTap()) return;
     resetAllYt();
-    unlockAndResume();
     track.insertBefore(track.lastElementChild, track.firstElementChild);
     setX(x);
+    paused = false;
+    tick.last = 0;
   }
 
-  function bindArrow(btn, fn) {
-    if (!btn) return;
-    btn.addEventListener("pointerdown", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!guardTap()) return;
-      fn();
-    }, { passive: false });
-  }
+  if (nextBtn) nextBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); next(); }, { passive:false });
+  if (prevBtn) prevBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); prev(); }, { passive:false });
 
-  bindArrow(nextBtn, next);
-  bindArrow(prevBtn, prev);
-
-  // ---------- Tap-to-play: create iframe only on tap ----------
-  track.addEventListener("pointerdown", (e) => {
-    const yt = e.target.closest?.(".yt[data-id]");
-    if (!yt || yt.classList.contains("is-playing")) return;
-
-    // stop slider immediately
-    pause(true);
-
-    const id = yt.getAttribute("data-id");
-    yt.classList.add("is-playing");
-    yt.innerHTML = "";
-
-    const iframe = document.createElement("iframe");
-    iframe.allowFullscreen = true;
-    iframe.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture");
-    iframe.style.position = "absolute";
-    iframe.style.inset = "0";
-    iframe.style.width = "100%";
-    iframe.style.height = "100%";
-    iframe.style.border = "0";
-    iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&playsinline=1&rel=0`;
-
-    yt.appendChild(iframe);
-  }, { passive: true });
-
-  // init
+  // init desktop loop
   measureStep();
   window.addEventListener("resize", measureStep, { passive: true });
 
   setX(0);
   paused = false;
-  mobileLocked = false;
   requestAnimationFrame(tick);
 });
 
