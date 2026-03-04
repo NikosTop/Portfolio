@@ -145,12 +145,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const isMobile = window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
 
+  // No transition for continuous move
   track.style.transition = "none";
 
-  // ✅ No clones (cloning iframes is a top cause of mobile crashes)
+  // ✅ No clones (cloning YouTube iframes is a common mobile crash)
   if (!track.children.length) return;
 
-  // Measure step = slide width + CSS gap
+  // Measure one step (slide width + CSS gap)
   let step = 0;
   function measureStep() {
     const first = track.children[0];
@@ -161,28 +162,24 @@ document.addEventListener("DOMContentLoaded", function () {
     step = w + gap;
   }
 
-// Only animate while slider is in view
-let inView = true;
-
-const io = new IntersectionObserver(([entry]) => {
-      inView = entry.isIntersecting;
-    
-      if (!entry.isIntersecting) {
-        paused = true;
-      }
-    
-    }, { threshold: 0.15 });
-    
-    io.observe(slider);
+  // Run only when visible
+  let inView = true;
+  const io = new IntersectionObserver(([entry]) => {
+    inView = entry.isIntersecting;
+    if (!entry.isIntersecting) paused = true; // extra safety for mobile
+  }, { threshold: 0.15 });
+  io.observe(slider);
 
   // Motion state
   let x = 0;
   let rafId = null;
   let paused = false;
+
+  // Mobile lock when video is interacted with
   let mobileLocked = false;
 
-  const SPEED = 55;
-  const MAX_DT = 0.05;   // prevent catch-up burst
+  const SPEED = 70;
+  const MAX_DT = 0.05;
 
   function setX(v) {
     x = v;
@@ -191,6 +188,7 @@ const io = new IntersectionObserver(([entry]) => {
 
   function tick(t) {
     if (!tick.last) tick.last = t;
+
     let dt = (t - tick.last) / 1000;
     if (dt > MAX_DT) dt = MAX_DT;
     tick.last = t;
@@ -224,53 +222,41 @@ const io = new IntersectionObserver(([entry]) => {
     tick.last = 0;
   }
 
-  // Desktop hover pause
+  function resume() {
+    if (isMobile && mobileLocked) return;
+    paused = false;
+  }
+
+  // Desktop pause on hover
   slider.addEventListener("mouseenter", () => { if (!isMobile) pause(false); });
-  slider.addEventListener("mouseleave", () => { if (!isMobile) paused = false; });
+  slider.addEventListener("mouseleave", () => { if (!isMobile) resume(); });
 
-  // Mobile unlock: scroll OR vertical swipe gesture (helps S24 where iframe eats scroll)
+  // ✅ Mobile unlock ONLY when real scroll happens (NOT by tapping outside)
   if (isMobile) {
-    const unlock = () => {
-      if (!mobileLocked) return;
-      mobileLocked = false;
-      paused = false;
-      tick.last = 0;
-    };
-
     let lastY = window.scrollY;
     window.addEventListener("scroll", () => {
       const y = window.scrollY;
-      if (y !== lastY) unlock();
+      if (y !== lastY && mobileLocked) {
+        mobileLocked = false;
+        paused = false;
+        tick.last = 0;
+      }
       lastY = y;
     }, { passive: true });
-
-    let startTouchY = null;
-    document.addEventListener("touchstart", (e) => {
-      startTouchY = e.touches?.[0]?.clientY ?? null;
-    }, { passive: true, capture: true });
-
-    document.addEventListener("touchmove", (e) => {
-      if (!mobileLocked || startTouchY == null) return;
-      const y = e.touches?.[0]?.clientY;
-      if (y == null) return;
-      if (Math.abs(y - startTouchY) > 18) {
-        unlock();
-        startTouchY = null;
-      }
-    }, { passive: true, capture: true });
   }
 
-  // Visibility handling (no catch-up)
+  // No speed burst after tab switching
   document.addEventListener("visibilitychange", () => {
     tick.last = 0;
     if (document.hidden) paused = true;
+    else if (!(isMobile && mobileLocked)) paused = false;
   });
   window.addEventListener("focus", () => { tick.last = 0; });
 
-  // ===== Buttons: hard anti-spam =====
+  // ===== Buttons: unlock+resume and anti-spam =====
   let lockedClicks = false;
   let lastTap = 0;
-  const TAP_COOLDOWN = 420;
+  const TAP_COOLDOWN = 420; // stronger to avoid mobile crashes
 
   function guardTap() {
     const now = performance.now();
@@ -309,13 +295,9 @@ const io = new IntersectionObserver(([entry]) => {
   bindArrow(nextBtn, next);
   bindArrow(prevBtn, prev);
 
-  // ===== YouTube API: lock on play/pause + ONE-TAP PLAY FIX (S24) =====
+  // ===== YouTube API: pause/lock EVERY time video plays/pauses =====
   const players = new Map();   // iframe -> player
-
-  function setIframeInteractive(iframe, on) {
-    if (!isMobile) return;
-    iframe.style.pointerEvents = on ? "auto" : "none";
-  }
+  const playQueue = new Set(); // iframe queued to play if tapped before ready
 
   function hookYouTube() {
     if (!window.YT || !YT.Player) return;
@@ -325,25 +307,19 @@ const io = new IntersectionObserver(([entry]) => {
       if (iframe._ytBound) return;
       iframe._ytBound = true;
 
-      // ensure starts non-interactive on mobile (first tap handled by page)
-      setIframeInteractive(iframe, false);
-
       const player = new YT.Player(iframe, {
         events: {
           onReady: () => {
             players.set(iframe, player);
+            if (playQueue.has(iframe)) {
+              playQueue.delete(iframe);
+              try { player.playVideo(); } catch (_) {}
+            }
           },
           onStateChange: (e) => {
+            // lock slider on PLAYING or PAUSED
             if (e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.PAUSED) {
               pause(true);
-              // while user is interacting with video, allow controls
-              setIframeInteractive(iframe, true);
-            }
-
-            // optional: when ended, you can disable again so next play is 1-tap
-            if (e.data === YT.PlayerState.ENDED) {
-              // keep locked until scroll/gesture/buttons per your rule
-              setIframeInteractive(iframe, false);
             }
           }
         }
@@ -352,27 +328,22 @@ const io = new IntersectionObserver(([entry]) => {
       players.set(iframe, player);
     });
 
-    // ✅ Mobile: first tap anywhere on a slide triggers play and locks slider
+    // ✅ S24 helper: on mobile, when user taps an iframe, we ask API to play too.
+    // IMPORTANT: we do NOT prevent default or stop propagation here, so the iframe still gets the tap.
     if (isMobile) {
       slider.addEventListener("pointerdown", (e) => {
-        const slide = e.target?.closest?.(".slide");
-        if (!slide) return;
-
-        const iframe = slide.querySelector("iframe");
+        const iframe =
+          e.target?.tagName === "IFRAME" ? e.target : e.target?.closest?.("iframe");
         if (!iframe) return;
 
-        // Stop slider immediately
-        pause(true);
+        pause(true); // stop slider immediately
 
-        // Start playing via API (counts as user gesture)
         const p = players.get(iframe);
         if (p && typeof p.playVideo === "function") {
           try { p.playVideo(); } catch (_) {}
+        } else {
+          playQueue.add(iframe);
         }
-
-        // Let the user use controls after we start
-        setIframeInteractive(iframe, true);
-
       }, { passive: true, capture: true });
     }
   }
@@ -394,6 +365,7 @@ const io = new IntersectionObserver(([entry]) => {
   setX(0);
   start();
 });
+
 
 
 
