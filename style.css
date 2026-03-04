@@ -976,6 +976,8 @@ body{
 
 @media (pointer: coarse), (max-width: 1024px) {
 
+    .yt{ touch-action: pan-y; }
+    
   .slider{
     overflow-x: auto;
     overflow-y: hidden;
@@ -998,6 +1000,7 @@ body{
   .slider::-webkit-scrollbar{ display:none; }
   .slider{ scrollbar-width: none; }
 }
+
 
 
 
