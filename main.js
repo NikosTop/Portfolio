@@ -139,19 +139,15 @@ document.addEventListener("DOMContentLoaded", function() {
 document.addEventListener("DOMContentLoaded", function () {
   const slider = document.querySelector(".slider");
   const track  = document.querySelector(".slide-track");
-  const prevBtn = document.querySelector(".prev");
-  const nextBtn = document.querySelector(".next");
   if (!slider || !track) return;
 
+  // Robust touch detection (works on S24 too)
   const isTouch =
-  (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
-  ("ontouchstart" in window) ||
-  window.matchMedia?.("(pointer: coarse)")?.matches;
+    (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
+    ("ontouchstart" in window) ||
+    window.matchMedia?.("(pointer: coarse)")?.matches;
 
-  // No transition for continuous move (desktop)
-  track.style.transition = "none";
-
-  // ---------- Thumbnails ----------
+  // Thumbnails
   const thumbs = track.querySelectorAll(".yt[data-id]");
   thumbs.forEach((el) => {
     const id = el.getAttribute("data-id");
@@ -172,7 +168,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // ---------- Helpers: reset player -> thumbnail ----------
+  // Reset helpers
   function ensurePlayIcon(yt) {
     if (!yt.querySelector(".play")) {
       const p = document.createElement("span");
@@ -192,20 +188,19 @@ document.addEventListener("DOMContentLoaded", function () {
     track.querySelectorAll(".yt.is-playing").forEach(resetYt);
   }
 
-  // ---------- Tap-to-play (ALL devices) ----------
-  // On touch devices we DO NOT autoplay to avoid Android blocking + "!" errors.
-  // User will tap the YouTube play button normally (100% consistent).
+  // Tap-to-play (no autoplay on touch to avoid Samsung restrictions / "!" errors)
   track.addEventListener("pointerdown", (e) => {
     const yt = e.target.closest?.(".yt[data-id]");
     if (!yt || yt.classList.contains("is-playing")) return;
 
     const id = yt.getAttribute("data-id");
+
     yt.classList.add("is-playing");
     yt.innerHTML = "";
 
     const iframe = document.createElement("iframe");
     iframe.allowFullscreen = true;
-    iframe.setAttribute("allow", "encrypted-media; picture-in-picture"); // no autoplay on touch
+    iframe.setAttribute("allow", isTouch ? "encrypted-media; picture-in-picture" : "autoplay; encrypted-media; picture-in-picture");
     iframe.style.position = "absolute";
     iframe.style.inset = "0";
     iframe.style.width = "100%";
@@ -213,43 +208,29 @@ document.addEventListener("DOMContentLoaded", function () {
     iframe.style.border = "0";
 
     const base = `https://www.youtube.com/embed/${id}?playsinline=1&rel=0`;
-    iframe.src = isTouch ? base : `${base}&autoplay=1`; // desktop can autoplay safely
+    iframe.src = isTouch ? base : `${base}&autoplay=1`;
 
     yt.appendChild(iframe);
-
-    // If touch device: allow user to swipe/scroll immediately, no locks.
-    // If desktop: keep your behaviour (you can still hover to pause via CSS/JS if you want).
   }, { passive: true });
 
-  // ✅ Reset when user taps outside slider
+  // Reset when tap outside slider
   document.addEventListener("pointerdown", (e) => {
     if (slider.contains(e.target)) return;
     resetAllYt();
   }, { passive: true });
 
-  // ✅ Reset when user scrolls away from slider
+  // Reset when scrolled away
   const io = new IntersectionObserver(([entry]) => {
     if (!entry.isIntersecting) resetAllYt();
   }, { threshold: 0.15 });
   io.observe(slider);
 
-  // ---------- TOUCH DEVICES: swipe only (NO auto-move) ----------
-  if (isTouch) {
-    // On touch devices we rely on native horizontal scroll (CSS scroll-snap).
-    // We only keep arrows working by scrolling the container.
-    const stepPx = 320 + 25; // approximate; real snapping handles it anyway
+  // --- TOUCH: swipe-only (NO auto move) ---
+  if (isTouch) return;
 
-    function scrollByOne(dir) {
-      slider.scrollBy({ left: dir * stepPx, behavior: "smooth" });
-    }
+  // --- DESKTOP: auto-moving loop ---
+  track.style.transition = "none";
 
-    if (nextBtn) nextBtn.addEventListener("click", () => scrollByOne(+1));
-    if (prevBtn) prevBtn.addEventListener("click", () => scrollByOne(-1));
-
-    return; // ✅ IMPORTANT: stop here, no requestAnimationFrame loop on touch
-  }
-
-  // ---------- DESKTOP: keep auto-moving loop ----------
   let step = 0;
   function measureStep() {
     const first = track.children[0];
@@ -262,7 +243,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let x = 0;
   let paused = false;
-
   const SPEED = 70;
   const MAX_DT = 0.05;
 
@@ -273,6 +253,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function tick(t) {
     if (!tick.last) tick.last = t;
+
     let dt = (t - tick.last) / 1000;
     if (dt > MAX_DT) dt = MAX_DT;
     tick.last = t;
@@ -280,7 +261,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!paused && step > 0) {
       setX(x - SPEED * dt);
 
-      // reset any playing iframe before reordering
+      // if first slide is playing, reset before reordering (keeps it stable)
       const firstSlide = track.firstElementChild;
       const playingYt = firstSlide?.querySelector?.(".yt.is-playing");
       if (playingYt) resetYt(playingYt);
@@ -294,55 +275,15 @@ document.addEventListener("DOMContentLoaded", function () {
     requestAnimationFrame(tick);
   }
 
-  // Pause on hover (desktop)
   slider.addEventListener("mouseenter", () => { paused = true; });
   slider.addEventListener("mouseleave", () => { paused = false; tick.last = 0; });
 
-  // Arrows (desktop) keep your behaviour
-  let lockedClicks = false;
-  let lastTap = 0;
-  const TAP_COOLDOWN = 420;
-
-  function guardTap() {
-    const now = performance.now();
-    if (lockedClicks) return false;
-    if (now - lastTap < TAP_COOLDOWN) return false;
-    lastTap = now;
-    lockedClicks = true;
-    setTimeout(() => { lockedClicks = false; }, TAP_COOLDOWN);
-    return true;
-  }
-
-  function next() {
-    if (!step) return;
-    if (!guardTap()) return;
-    resetAllYt();
-    track.appendChild(track.firstElementChild);
-    setX(x);
-    paused = false;
-    tick.last = 0;
-  }
-
-  function prev() {
-    if (!step) return;
-    if (!guardTap()) return;
-    resetAllYt();
-    track.insertBefore(track.lastElementChild, track.firstElementChild);
-    setX(x);
-    paused = false;
-    tick.last = 0;
-  }
-
-  if (nextBtn) nextBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); next(); }, { passive:false });
-  if (prevBtn) prevBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); prev(); }, { passive:false });
-
-  // init desktop loop
   measureStep();
   window.addEventListener("resize", measureStep, { passive: true });
 
   setX(0);
-  paused = false;
   requestAnimationFrame(tick);
 });
+
 
 
