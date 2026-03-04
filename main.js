@@ -145,15 +145,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const isMobile = window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
 
-  // IMPORTANT: no DOM re-order of iframes anymore (because we don't keep iframes alive)
-  // We can still use the conveyor re-order safely because slides contain light divs, not iframes.
+  // No transition for continuous move
   track.style.transition = "none";
 
-  // --- build thumbnails ---
+  // --- Build thumbnails from .yt[data-id] ---
+  // Your HTML must be:
+  // <div class="slide"><div class="yt" data-id="VIDEO_ID"><span class="play"></span></div></div>
   const thumbs = track.querySelectorAll(".yt[data-id]");
-  thumbs.forEach(el => {
+  thumbs.forEach((el) => {
     const id = el.getAttribute("data-id");
-    el.style.backgroundImage = `url(https://i.ytimg.com/vi/${id}/hqdefault.jpg)`;
+    if (!id) return;
+
+    // maxres first, fallback to hq (prevents "missing thumbnails" look)
+    const maxres = `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
+    const hq = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+
+    const img = new Image();
+    img.onload = () => { el.style.backgroundImage = `url(${maxres})`; };
+    img.onerror = () => { el.style.backgroundImage = `url(${hq})`; };
+    img.src = maxres;
+
     if (!el.querySelector(".play")) {
       const p = document.createElement("span");
       p.className = "play";
@@ -161,7 +172,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // --- measure step ---
+  // --- Measure step (slide width + CSS gap) ---
   let step = 0;
   function measureStep() {
     const first = track.children[0];
@@ -172,24 +183,31 @@ document.addEventListener("DOMContentLoaded", function () {
     step = w + gap;
   }
 
-  // --- motion state ---
+  // --- Motion state ---
   let x = 0;
   let paused = false;
   let mobileLocked = false;
-  const SPEED = 70;
-  const MAX_DT = 0.05;
+
+  const SPEED = 70;     // px/sec
+  const MAX_DT = 0.05;  // prevent catch-up burst
 
   function setX(v) {
     x = v;
     track.style.transform = `translate3d(${Math.round(x)}px,0,0)`;
   }
 
-  // run only when visible + resume when visible again
+  // inView handling: pause when off-screen, resume when back (unless locked)
   let inView = true;
   const io = new IntersectionObserver(([entry]) => {
     inView = entry.isIntersecting;
-    if (!entry.isIntersecting) paused = true;
-    else if (!(isMobile && mobileLocked)) { paused = false; tick.last = 0; }
+    if (!entry.isIntersecting) {
+      paused = true;
+    } else {
+      if (!(isMobile && mobileLocked)) {
+        paused = false;
+        tick.last = 0;
+      }
+    }
   }, { threshold: 0.15 });
   io.observe(slider);
 
@@ -202,12 +220,13 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!paused && inView && step > 0) {
       setX(x - SPEED * dt);
 
-      // conveyor re-order (now safe because no live iframes)
+      // conveyor reorder (safe because we are NOT moving live iframes around)
       while (-x >= step) {
         track.appendChild(track.firstElementChild);
         setX(x + step);
       }
     }
+
     requestAnimationFrame(tick);
   }
 
@@ -215,17 +234,18 @@ document.addEventListener("DOMContentLoaded", function () {
     paused = true;
     if (isMobile && lockMobile) mobileLocked = true;
   }
+
   function unlockAndResume() {
     if (isMobile) mobileLocked = false;
     paused = false;
     tick.last = 0;
   }
 
-  // desktop hover pause
+  // Desktop hover pause
   slider.addEventListener("mouseenter", () => { if (!isMobile) pause(false); });
   slider.addEventListener("mouseleave", () => { if (!isMobile) { paused = false; tick.last = 0; } });
 
-  // mobile resume ONLY on real scroll
+  // Mobile resume ONLY on real page scroll
   if (isMobile) {
     let lastY = window.scrollY;
     window.addEventListener("scroll", () => {
@@ -239,14 +259,18 @@ document.addEventListener("DOMContentLoaded", function () {
     }, { passive: true });
   }
 
-  // pause when tab hidden; resume when back (unless locked)
+  // Pause when tab hidden; resume when back (unless locked)
   document.addEventListener("visibilitychange", () => {
     tick.last = 0;
-    if (document.hidden) paused = true;
-    else if (!(isMobile && mobileLocked) && inView) { paused = false; tick.last = 0; }
+    if (document.hidden) {
+      paused = true;
+    } else if (!(isMobile && mobileLocked) && inView) {
+      paused = false;
+      tick.last = 0;
+    }
   });
 
-  // --- arrows + anti-spam ---
+  // --- Arrows + anti-spam ---
   let lockedClicks = false;
   let lastTap = 0;
   const TAP_COOLDOWN = 420;
@@ -284,32 +308,29 @@ document.addEventListener("DOMContentLoaded", function () {
       fn();
     }, { passive: false });
   }
+
   bindArrow(nextBtn, next);
   bindArrow(prevBtn, prev);
 
-  // --- tap to create iframe + autoplay ---
+  // --- Tap-to-play: create iframe only when user taps a thumbnail ---
   track.addEventListener("pointerdown", (e) => {
     const yt = e.target.closest?.(".yt[data-id]");
     if (!yt || yt.classList.contains("is-playing")) return;
 
-    // pause slider and lock on mobile
     pause(true);
 
     const id = yt.getAttribute("data-id");
-
     yt.classList.add("is-playing");
-    yt.innerHTML = ""; // remove play icon/overlay
+    yt.innerHTML = ""; // remove overlay/play icon
 
     const iframe = document.createElement("iframe");
-    iframe.width = "100%";
-    iframe.height = "100%";
+    iframe.allowFullscreen = true;
+    iframe.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture");
     iframe.style.position = "absolute";
     iframe.style.inset = "0";
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
     iframe.style.border = "0";
-    iframe.allowFullscreen = true;
-
-    // IMPORTANT: allow autoplay for consistent Android behavior
-    iframe.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture");
 
     iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&playsinline=1&rel=0`;
 
