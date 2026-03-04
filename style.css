@@ -1017,6 +1017,31 @@ body{
 .slide .yt.is-playing .play,
 .slide .yt.is-playing::before{ display:none; }
 
+@media (hover: none) and (pointer: coarse){
+
+  .slider{
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 18px; /* optional */
+  }
+
+  .slide-track{
+    transform: none !important;   /* disable JS transform movement on touch devices */
+    will-change: auto;
+  }
+
+  .slide{
+    scroll-snap-align: center;
+    flex: 0 0 auto;
+  }
+
+  /* optional: hide scrollbar */
+  .slider::-webkit-scrollbar{ display:none; }
+  .slider{ scrollbar-width: none; }
+}
+
 
 
 
