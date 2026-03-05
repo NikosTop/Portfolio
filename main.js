@@ -141,7 +141,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const track  = document.querySelector(".slide-track");
   if (!slider || !track) return;
 
-  // Robust touch detection (works on S24 too)
+  // Robust touch detection (fixes S24 mis-detection)
   const isTouch =
     (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
     ("ontouchstart" in window) ||
@@ -200,7 +200,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }, { threshold: 0.15 });
   ioReset.observe(slider);
 
-  // ---------- Open video ----------
+  // ---------- Tap-to-play that DOES NOT block swipe on touch devices ----------
   function openVideo(yt, autoplay) {
     if (!yt || yt.classList.contains("is-playing")) return;
 
@@ -212,12 +212,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const iframe = document.createElement("iframe");
     iframe.allowFullscreen = true;
+
+    // Avoid autoplay on touch devices (Android can block, causes "!" errors)
     iframe.setAttribute(
       "allow",
       autoplay
         ? "autoplay; encrypted-media; picture-in-picture"
         : "encrypted-media; picture-in-picture"
     );
+
     iframe.style.position = "absolute";
     iframe.style.inset = "0";
     iframe.style.width = "100%";
@@ -230,65 +233,58 @@ document.addEventListener("DOMContentLoaded", function () {
     yt.appendChild(iframe);
   }
 
-  // ---------- TOUCH: swipe mode + hint (ALWAYS show 5s) ----------
-  if (isTouch) {
-    // Swipe-safe tap-to-open (tap only, not swipe)
-    let startX = 0, startY = 0;
-    let moved = false;
-    let targetYt = null;
+ if (isTouch) {
+  let startX = 0, startY = 0;
+  let moved = false;
+  let targetYt = null;
 
-    track.addEventListener("touchstart", (e) => {
-      const t = e.touches[0];
-      const yt = e.target.closest?.(".yt[data-id]");
-      if (!yt || yt.classList.contains("is-playing")) {
-        targetYt = null;
-        return;
-      }
-      startX = t.clientX;
-      startY = t.clientY;
-      moved = false;
-      targetYt = yt;
-    }, { passive: true });
-
-    track.addEventListener("touchmove", (e) => {
-      if (!targetYt) return;
-      const t = e.touches[0];
-      const dx = t.clientX - startX;
-      const dy = t.clientY - startY;
-
-      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
-        moved = true;
-        targetYt = null;
-      }
-    }, { passive: true });
-
-    track.addEventListener("touchend", () => {
-      if (!targetYt) return;
-      if (!moved) openVideo(targetYt, false); // no autoplay on touch
+  track.addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    const yt = e.target.closest?.(".yt[data-id]");
+    if (!yt || yt.classList.contains("is-playing")) {
       targetYt = null;
-      moved = false;
-    }, { passive: true });
-
-    // Hint: show on every load/refresh for 5s (no ghost swipe)
-    const hint = document.querySelector(".video-slider-section .slider-hint");
-    if (hint) {
-      hint.classList.remove("is-hidden");
-      hint.style.opacity = "1";
-
-      setTimeout(() => {
-        hint.classList.add("is-hidden"); // fully collapses via your CSS
-      }, 5000);
+      return;
     }
+    startX = t.clientX;
+    startY = t.clientY;
+    moved = false;
+    targetYt = yt;
+  }, { passive: true });
 
-    return; // ✅ stop here on touch devices
+  track.addEventListener("touchmove", (e) => {
+    if (!targetYt) return;
+    const t = e.touches[0];
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+
+    // If user swipes horizontally enough, treat as swipe (do NOT open)
+    if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+      moved = true;
+      targetYt = null;
+    }
+  }, { passive: true });
+
+  track.addEventListener("touchend", () => {
+    if (!targetYt) return;
+
+    // Tap (no swipe) -> open iframe
+    if (!moved) openVideo(targetYt, false);
+
+    targetYt = null;
+    moved = false;
+  }, { passive: true });
+ }
+ else {
+    // Desktop: click/tap opens with autoplay
+    track.addEventListener("pointerdown", (e) => {
+      const yt = e.target.closest?.(".yt[data-id]");
+      if (!yt || yt.classList.contains("is-playing")) return;
+      openVideo(yt, true);
+    }, { passive: true });
   }
 
-  // ---------- DESKTOP: click opens with autoplay ----------
-  track.addEventListener("pointerdown", (e) => {
-    const yt = e.target.closest?.(".yt[data-id]");
-    if (!yt || yt.classList.contains("is-playing")) return;
-    openVideo(yt, true);
-  }, { passive: true });
+  // ---------- TOUCH DEVICES: swipe-only (NO auto-move) ----------
+  if (isTouch) return;
 
   // ---------- DESKTOP: auto-moving loop ----------
   track.style.transition = "none";
@@ -316,6 +312,7 @@ document.addEventListener("DOMContentLoaded", function () {
     track.style.transform = `translate3d(${Math.round(x)}px,0,0)`;
   }
 
+  // pause when off-screen, resume when back
   let inView = true;
   const ioRun = new IntersectionObserver(([entry]) => {
     inView = entry.isIntersecting;
@@ -334,6 +331,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!paused && inView && step > 0) {
       setX(x - SPEED * dt);
 
+      // If first slide has an open video, reset before reorder (keeps it stable)
       const firstSlide = track.firstElementChild;
       const playingYt = firstSlide?.querySelector?.(".yt.is-playing");
       if (playingYt) resetYt(playingYt);
@@ -352,8 +350,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   document.addEventListener("visibilitychange", () => {
     tick.last = 0;
-    paused = document.hidden ? true : false;
-    if (!document.hidden) tick.last = 0;
+    if (document.hidden) paused = true;
+    else { paused = false; tick.last = 0; }
   });
 
   measureStep();
@@ -362,5 +360,6 @@ document.addEventListener("DOMContentLoaded", function () {
   setX(0);
   requestAnimationFrame(tick);
 });
+
 
 
