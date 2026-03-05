@@ -361,23 +361,59 @@ document.addEventListener("DOMContentLoaded", function () {
   requestAnimationFrame(tick);
 });
 
-// Hand slide
-
+// ===== SLIDER GHOST SWIPE (touch devices only) =====
 document.addEventListener("DOMContentLoaded", () => {
-  const hint = document.querySelector(".slider-hint");
-  if(!hint) return;
+  const slider = document.querySelector(".video-slider-section .slider");
+  const hint   = document.querySelector(".video-slider-section .slider-hint");
+  if (!slider || !hint) return;
 
   const isTouch =
-    navigator.maxTouchPoints > 0 ||
-    "ontouchstart" in window ||
-    window.matchMedia("(pointer: coarse)").matches;
+    (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
+    ("ontouchstart" in window) ||
+    window.matchMedia?.("(pointer: coarse)")?.matches;
 
-  if(!isTouch) return;
+  if (!isTouch) return;
+
+  // Run only once (per browser/device)
+  const key = "sliderGhostSwipeSeen";
+  if (localStorage.getItem(key) === "1") {
+    hint.style.opacity = "0";
+    return;
+  }
+  localStorage.setItem(key, "1");
+
+  // small ghost swipe: scroll a bit right then back
+  const DIST = Math.min(90, Math.max(40, slider.clientWidth * 0.18)); // responsive distance
+  const D1 = 450;  // ms out
+  const D2 = 450;  // ms back
+  const WAIT = 650; // delay before starting
+
+  function animateScroll(from, to, duration, done) {
+    const start = performance.now();
+    function frame(t) {
+      const p = Math.min(1, (t - start) / duration);
+      // ease in-out
+      const eased = p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2) / 2;
+      slider.scrollLeft = from + (to - from) * eased;
+      if (p < 1) requestAnimationFrame(frame);
+      else done && done();
+    }
+    requestAnimationFrame(frame);
+  }
 
   setTimeout(() => {
+    const s0 = slider.scrollLeft;
+    animateScroll(s0, s0 + DIST, D1, () => {
+      animateScroll(slider.scrollLeft, s0, D2);
+    });
+  }, WAIT);
+
+  // hide hint after a bit
+  setTimeout(() => {
     hint.style.opacity = "0";
-  }, 3000);
+  }, 2800);
 });
+
 
 
 
