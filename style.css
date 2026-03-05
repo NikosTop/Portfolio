@@ -1005,7 +1005,50 @@ body{
   /* optional: hide scrollbar */
   .slider::-webkit-scrollbar{ display:none; }
   .slider{ scrollbar-width: none; }
+
+  .slider-hint{
+    opacity:1;
+  }
 }
+
+/* SWIPE HINT */
+
+.slider-wrapper{
+  position:relative;
+}
+
+.slider-hint{
+  position:absolute;
+  left:50%;
+  top:-55px;
+  transform:translateX(-50%);
+  text-align:center;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .5s ease;
+}
+
+.slider-hint .hand{
+  font-size:28px;
+  animation:slideHand 1.4s infinite;
+}
+
+.slider-hint .hint-text{
+  font-family:'Josefin Sans',sans-serif;
+  font-size:12px;
+  letter-spacing:2px;
+  color:#fff;
+  margin-top:4px;
+  text-transform:uppercase;
+}
+
+/* animation */
+@keyframes slideHand{
+  0%{ transform:translateX(-8px); }
+  50%{ transform:translateX(8px); }
+  100%{ transform:translateX(-8px); }
+}
+
 
 
 
