@@ -1066,6 +1066,7 @@ body{
   }
 }
 
+/* fully remove hint block */
 .slider-hint.is-hidden{
   opacity: 0 !important;
   visibility: hidden !important;
