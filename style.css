@@ -1025,7 +1025,7 @@ body{
 
 .slider-hint .hint-text{
   font-family:'Josefin Sans',sans-serif;
-  font-size:11px;
+  font-size:15px;
   letter-spacing:2px;
   text-transform:uppercase;
   color:#fff;
@@ -1041,8 +1041,8 @@ body{
 }
 
 .swipe-svg{
-  width:46px;
-  height:46px;
+  width:55px;
+  height:55px;
   color:#fff;
   opacity:.95;
   animation: swipeWiggle 1.4s ease-in-out infinite;
@@ -1061,6 +1061,7 @@ body{
 @media (pointer: coarse){
   .slider-hint{ opacity: 1; }
 }
+
 
 
 
