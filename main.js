@@ -141,7 +141,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const track  = document.querySelector(".slide-track");
   if (!slider || !track) return;
 
-  // Robust touch detection (fixes S24 mis-detection)
+  // Robust touch detection (works on S24 too)
   const isTouch =
     (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
     ("ontouchstart" in window) ||
@@ -212,14 +212,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const iframe = document.createElement("iframe");
     iframe.allowFullscreen = true;
-
     iframe.setAttribute(
       "allow",
       autoplay
         ? "autoplay; encrypted-media; picture-in-picture"
         : "encrypted-media; picture-in-picture"
     );
-
     iframe.style.position = "absolute";
     iframe.style.inset = "0";
     iframe.style.width = "100%";
@@ -232,7 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
     yt.appendChild(iframe);
   }
 
-  // ---------- TOUCH: swipe mode + hint + ghost swipe (NO desktop loop) ----------
+  // ---------- TOUCH: swipe mode + hint (ALWAYS show 5s) ----------
   if (isTouch) {
     // Swipe-safe tap-to-open (tap only, not swipe)
     let startX = 0, startY = 0;
@@ -271,20 +269,15 @@ document.addEventListener("DOMContentLoaded", function () {
       moved = false;
     }, { passive: true });
 
-    // --- Hint + ghost swipe (ONLY ONCE EVER) ---
-   // --- Hint (ALWAYS show on each load/refresh, hide after 5s) ---
-const hint = document.querySelector(".video-slider-section .slider-hint");
-if (hint) {
-  hint.classList.remove("is-hidden");
-  hint.style.opacity = "1";
+    // Hint: show on every load/refresh for 5s (no ghost swipe)
+    const hint = document.querySelector(".video-slider-section .slider-hint");
+    if (hint) {
+      hint.classList.remove("is-hidden");
+      hint.style.opacity = "1";
 
-  setTimeout(() => {
-    hint.classList.add("is-hidden"); // collapses completely (your CSS)
-  }, 5000);
-} else {
-        // already seen -> keep hidden always (prevents refresh showing it again)
-        hint.classList.add("is-hidden");
-      }
+      setTimeout(() => {
+        hint.classList.add("is-hidden"); // fully collapses via your CSS
+      }, 5000);
     }
 
     return; // ✅ stop here on touch devices
