@@ -1048,6 +1048,24 @@ body{
 @media (pointer: coarse){
   .slider-hint{ opacity: 1; }
 }
+@media (pointer: coarse){
+  .slider-wrapper{
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .slider{
+    width: 100%;
+  }
+
+  .slider-hint{
+    width: 100%;
+    margin-top: 14px;
+    text-align: center;
+  }
+}
+
 
 
 
