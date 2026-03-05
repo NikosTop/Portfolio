@@ -1030,11 +1030,11 @@ body{
 
 .slider-hint .hint-text{
   font-family:'Josefin Sans',sans-serif;
-  font-size: 13px;            /* slightly bigger */
+  font-size: 17px;            /* slightly bigger */
   letter-spacing: 3px;
   text-transform: uppercase;
   color: #fff;
-  margin-top: 6px;
+  margin-top: 3px;
   opacity: .9;
 }
 
@@ -1075,6 +1075,7 @@ body{
   padding: 0 !important;
   overflow: hidden !important;
 }
+
 
 
 
