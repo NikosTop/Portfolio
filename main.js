@@ -361,6 +361,23 @@ document.addEventListener("DOMContentLoaded", function () {
   requestAnimationFrame(tick);
 });
 
+// Hand slide
+
+document.addEventListener("DOMContentLoaded", () => {
+  const hint = document.querySelector(".slider-hint");
+  if(!hint) return;
+
+  const isTouch =
+    navigator.maxTouchPoints > 0 ||
+    "ontouchstart" in window ||
+    window.matchMedia("(pointer: coarse)").matches;
+
+  if(!isTouch) return;
+
+  setTimeout(() => {
+    hint.style.opacity = "0";
+  }, 3000);
+});
 
 
 
