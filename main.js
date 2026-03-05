@@ -272,36 +272,16 @@ document.addEventListener("DOMContentLoaded", function () {
     }, { passive: true });
 
     // --- Hint + ghost swipe (ONLY ONCE EVER) ---
-    const hint = document.querySelector(".video-slider-section .slider-hint");
-    if (hint) {
-      const key = "sliderSwipeHintSeen";
-      const seen = localStorage.getItem(key) === "1";
+   // --- Hint (ALWAYS show on each load/refresh, hide after 5s) ---
+const hint = document.querySelector(".video-slider-section .slider-hint");
+if (hint) {
+  hint.classList.remove("is-hidden");
+  hint.style.opacity = "1";
 
-      if (!seen) {
-        localStorage.setItem(key, "1");
-
-        // ensure visible
-        hint.classList.remove("is-hidden");
-        hint.style.opacity = "1";
-
-        // ghost swipe using native scroll
-        setTimeout(() => {
-          const maxScroll = slider.scrollWidth - slider.clientWidth;
-          if (maxScroll <= 5) return;
-
-          const start = slider.scrollLeft;
-          const dist = Math.min(160, Math.max(80, slider.clientWidth * 0.25));
-          const to = Math.min(start + dist, maxScroll);
-
-          slider.scrollTo({ left: to, behavior: "smooth" });
-          setTimeout(() => slider.scrollTo({ left: start, behavior: "smooth" }), 550);
-        }, 700);
-
-        // hide after 7s (fully remove block)
-        setTimeout(() => {
-          hint.classList.add("is-hidden");
-        }, 7000);
-      } else {
+  setTimeout(() => {
+    hint.classList.add("is-hidden"); // collapses completely (your CSS)
+  }, 5000);
+} else {
         // already seen -> keep hidden always (prevents refresh showing it again)
         hint.classList.add("is-hidden");
       }
@@ -389,4 +369,5 @@ document.addEventListener("DOMContentLoaded", function () {
   setX(0);
   requestAnimationFrame(tick);
 });
+
 
