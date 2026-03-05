@@ -200,7 +200,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }, { threshold: 0.15 });
   ioReset.observe(slider);
 
-  // ---------- Tap-to-play that DOES NOT block swipe on touch devices ----------
+  // ---------- Open video ----------
   function openVideo(yt, autoplay) {
     if (!yt || yt.classList.contains("is-playing")) return;
 
@@ -213,7 +213,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const iframe = document.createElement("iframe");
     iframe.allowFullscreen = true;
 
-    // Avoid autoplay on touch devices (Android can block, causes "!" errors)
     iframe.setAttribute(
       "allow",
       autoplay
@@ -233,58 +232,90 @@ document.addEventListener("DOMContentLoaded", function () {
     yt.appendChild(iframe);
   }
 
- if (isTouch) {
-  let startX = 0, startY = 0;
-  let moved = false;
-  let targetYt = null;
+  // ---------- TOUCH: swipe mode + hint + ghost swipe (NO desktop loop) ----------
+  if (isTouch) {
+    // Swipe-safe tap-to-open (tap only, not swipe)
+    let startX = 0, startY = 0;
+    let moved = false;
+    let targetYt = null;
 
-  track.addEventListener("touchstart", (e) => {
-    const t = e.touches[0];
-    const yt = e.target.closest?.(".yt[data-id]");
-    if (!yt || yt.classList.contains("is-playing")) {
-      targetYt = null;
-      return;
-    }
-    startX = t.clientX;
-    startY = t.clientY;
-    moved = false;
-    targetYt = yt;
-  }, { passive: true });
-
-  track.addEventListener("touchmove", (e) => {
-    if (!targetYt) return;
-    const t = e.touches[0];
-    const dx = t.clientX - startX;
-    const dy = t.clientY - startY;
-
-    // If user swipes horizontally enough, treat as swipe (do NOT open)
-    if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
-      moved = true;
-      targetYt = null;
-    }
-  }, { passive: true });
-
-  track.addEventListener("touchend", () => {
-    if (!targetYt) return;
-
-    // Tap (no swipe) -> open iframe
-    if (!moved) openVideo(targetYt, false);
-
-    targetYt = null;
-    moved = false;
-  }, { passive: true });
- }
- else {
-    // Desktop: click/tap opens with autoplay
-    track.addEventListener("pointerdown", (e) => {
+    track.addEventListener("touchstart", (e) => {
+      const t = e.touches[0];
       const yt = e.target.closest?.(".yt[data-id]");
-      if (!yt || yt.classList.contains("is-playing")) return;
-      openVideo(yt, true);
+      if (!yt || yt.classList.contains("is-playing")) {
+        targetYt = null;
+        return;
+      }
+      startX = t.clientX;
+      startY = t.clientY;
+      moved = false;
+      targetYt = yt;
     }, { passive: true });
+
+    track.addEventListener("touchmove", (e) => {
+      if (!targetYt) return;
+      const t = e.touches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+
+      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+        moved = true;
+        targetYt = null;
+      }
+    }, { passive: true });
+
+    track.addEventListener("touchend", () => {
+      if (!targetYt) return;
+      if (!moved) openVideo(targetYt, false); // no autoplay on touch
+      targetYt = null;
+      moved = false;
+    }, { passive: true });
+
+    // --- Hint + ghost swipe (ONLY ONCE EVER) ---
+    const hint = document.querySelector(".video-slider-section .slider-hint");
+    if (hint) {
+      const key = "sliderSwipeHintSeen";
+      const seen = localStorage.getItem(key) === "1";
+
+      if (!seen) {
+        localStorage.setItem(key, "1");
+
+        // ensure visible
+        hint.classList.remove("is-hidden");
+        hint.style.opacity = "1";
+
+        // ghost swipe using native scroll
+        setTimeout(() => {
+          const maxScroll = slider.scrollWidth - slider.clientWidth;
+          if (maxScroll <= 5) return;
+
+          const start = slider.scrollLeft;
+          const dist = Math.min(160, Math.max(80, slider.clientWidth * 0.25));
+          const to = Math.min(start + dist, maxScroll);
+
+          slider.scrollTo({ left: to, behavior: "smooth" });
+          setTimeout(() => slider.scrollTo({ left: start, behavior: "smooth" }), 550);
+        }, 700);
+
+        // hide after 7s (fully remove block)
+        setTimeout(() => {
+          hint.classList.add("is-hidden");
+        }, 7000);
+      } else {
+        // already seen -> keep hidden always (prevents refresh showing it again)
+        hint.classList.add("is-hidden");
+      }
+    }
+
+    return; // ✅ stop here on touch devices
   }
 
-  // ---------- TOUCH DEVICES: swipe-only (NO auto-move) ----------
-  if (isTouch) return;
+  // ---------- DESKTOP: click opens with autoplay ----------
+  track.addEventListener("pointerdown", (e) => {
+    const yt = e.target.closest?.(".yt[data-id]");
+    if (!yt || yt.classList.contains("is-playing")) return;
+    openVideo(yt, true);
+  }, { passive: true });
 
   // ---------- DESKTOP: auto-moving loop ----------
   track.style.transition = "none";
@@ -312,7 +343,6 @@ document.addEventListener("DOMContentLoaded", function () {
     track.style.transform = `translate3d(${Math.round(x)}px,0,0)`;
   }
 
-  // pause when off-screen, resume when back
   let inView = true;
   const ioRun = new IntersectionObserver(([entry]) => {
     inView = entry.isIntersecting;
@@ -331,7 +361,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!paused && inView && step > 0) {
       setX(x - SPEED * dt);
 
-      // If first slide has an open video, reset before reorder (keeps it stable)
       const firstSlide = track.firstElementChild;
       const playingYt = firstSlide?.querySelector?.(".yt.is-playing");
       if (playingYt) resetYt(playingYt);
@@ -350,8 +379,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   document.addEventListener("visibilitychange", () => {
     tick.last = 0;
-    if (document.hidden) paused = true;
-    else { paused = false; tick.last = 0; }
+    paused = document.hidden ? true : false;
+    if (!document.hidden) tick.last = 0;
   });
 
   measureStep();
@@ -360,61 +389,4 @@ document.addEventListener("DOMContentLoaded", function () {
   setX(0);
   requestAnimationFrame(tick);
 });
-
-// ===== SLIDER GHOST SWIPE (touch devices only) =====
-document.addEventListener("DOMContentLoaded", () => {
-  const slider = document.querySelector(".video-slider-section .slider");
-  const hint   = document.querySelector(".video-slider-section .slider-hint");
-  if (!slider || !hint) return;
-
-  const isTouch =
-    (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
-    ("ontouchstart" in window) ||
-    window.matchMedia?.("(pointer: coarse)")?.matches;
-
-  if (!isTouch) return;
-
-  // Run once per session (so it shows again on next visit if you want)
-  const key = "ghostSwipeSeenSession";
-  if (sessionStorage.getItem(key) === "1") return;
-  sessionStorage.setItem(key, "1");
-
-  // Make sure hint is visible
-  hint.style.opacity = "1";
-
-  // Ghost swipe using native scrollLeft (works with transform:none !important)
-  const DIST = Math.min(140, Math.max(70, slider.clientWidth * 0.22));
-  const WAIT = 700;
-  const D1 = 520;
-  const D2 = 520;
-
-  function animateScroll(from, to, duration, done) {
-    const start = performance.now();
-    function frame(t) {
-      const p = Math.min(1, (t - start) / duration);
-      const eased = p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2) / 2; // easeInOutQuad
-      slider.scrollLeft = from + (to - from) * eased;
-      if (p < 1) requestAnimationFrame(frame);
-      else done && done();
-    }
-    requestAnimationFrame(frame);
-  }
-
-  setTimeout(() => {
-    const s0 = slider.scrollLeft;
-    animateScroll(s0, s0 + DIST, D1, () => {
-      animateScroll(slider.scrollLeft, s0, D2);
-    });
-  }, WAIT);
-
-  // Keep hint for 7 seconds, then fade out
-  setTimeout(() => {
-    hint.style.opacity = "0";
-  }, 7000);
-});
-
-
-
-
-
 
