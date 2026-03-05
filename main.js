@@ -374,26 +374,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!isTouch) return;
 
-  // Run only once (per browser/device)
-  const key = "sliderGhostSwipeSeen";
-  if (localStorage.getItem(key) === "1") {
-    hint.style.opacity = "0";
-    return;
-  }
-  localStorage.setItem(key, "1");
+  // Run once per session (so it shows again on next visit if you want)
+  const key = "ghostSwipeSeenSession";
+  if (sessionStorage.getItem(key) === "1") return;
+  sessionStorage.setItem(key, "1");
 
-  // small ghost swipe: scroll a bit right then back
-  const DIST = Math.min(90, Math.max(40, slider.clientWidth * 0.18)); // responsive distance
-  const D1 = 450;  // ms out
-  const D2 = 450;  // ms back
-  const WAIT = 650; // delay before starting
+  // Make sure hint is visible
+  hint.style.opacity = "1";
+
+  // Ghost swipe using native scrollLeft (works with transform:none !important)
+  const DIST = Math.min(140, Math.max(70, slider.clientWidth * 0.22));
+  const WAIT = 700;
+  const D1 = 520;
+  const D2 = 520;
 
   function animateScroll(from, to, duration, done) {
     const start = performance.now();
     function frame(t) {
       const p = Math.min(1, (t - start) / duration);
-      // ease in-out
-      const eased = p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2) / 2;
+      const eased = p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2) / 2; // easeInOutQuad
       slider.scrollLeft = from + (to - from) * eased;
       if (p < 1) requestAnimationFrame(frame);
       else done && done();
@@ -408,11 +407,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }, WAIT);
 
-  // hide hint after a bit
+  // Keep hint for 7 seconds, then fade out
   setTimeout(() => {
     hint.style.opacity = "0";
-  }, 2800);
+  }, 7000);
 });
+
 
 
 
