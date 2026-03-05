@@ -149,18 +149,32 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // ===== Swipe hint (SVG) — ONLY on touch =====
   // IMPORTANT: this will also force-hide it on desktop so it never affects layout there.
-  const hint = document.querySelector(".video-slider-section .slider-hint");
-  if (hint) {
-    if (isTouch) {
+  // ===== Swipe hint: show ONLY when user reaches slider section (touch only) =====
+const section = document.querySelector(".video-slider-section");
+const hint = document.querySelector(".video-slider-section .slider-hint");
+
+if (hint) hint.classList.add("is-hidden"); // keep hidden by default
+
+if (isTouch && section && hint) {
+  const ioHint = new IntersectionObserver(
+    ([entry]) => {
+      if (!entry.isIntersecting) return;
+
+      // show once per visit when section enters viewport
       hint.classList.remove("is-hidden");
       hint.style.opacity = "1";
+
       setTimeout(() => {
-        hint.classList.add("is-hidden"); // fully collapses via your CSS
+        hint.classList.add("is-hidden"); // fully collapses via CSS
       }, 5000);
-    } else {
-      hint.classList.add("is-hidden"); // desktop: remove block completely
-    }
-  }
+
+      ioHint.disconnect(); // run only once
+    },
+    { threshold: 0.35 } // shows when ~35% of section is visible
+  );
+
+  ioHint.observe(section);
+}
 
   // ---------- Thumbnails ----------
   const thumbs = track.querySelectorAll(".yt[data-id]");
@@ -370,6 +384,7 @@ document.addEventListener("DOMContentLoaded", function () {
   setX(0);
   requestAnimationFrame(tick);
 });
+
 
 
 
