@@ -560,7 +560,7 @@ body{
 
 .slider-wrapper {
     position: relative;
-    align-items: center;
+    display: block; 
 }
 
 .slider {
@@ -1043,10 +1043,6 @@ body{
   100% { transform: translateX(-10px); }
 }
 
-/* show only on touch devices */
-@media (pointer: coarse){
-  .slider-hint{ opacity: 1; }
-}
 @media (pointer: coarse){
 
   .slider{
@@ -1069,6 +1065,7 @@ body{
   padding: 0 !important;
   overflow: hidden !important;
 }
+
 
 
 
